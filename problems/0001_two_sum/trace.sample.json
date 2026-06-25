@@ -1,0 +1,238 @@
+{
+  "trace_version": "0.1.0",
+  "problem": {
+    "problem_id": "0001_two_sum",
+    "display_title": "两数之和",
+    "pattern_tags": [
+      "array",
+      "hash_map"
+    ],
+    "difficulty": "easy",
+    "entry": {
+      "class_name": "Solution",
+      "method_name": "twoSum"
+    },
+    "input_schema": {
+      "type": "object",
+      "fields": [
+        {
+          "name": "nums",
+          "type": "array",
+          "items": "int"
+        },
+        {
+          "name": "target",
+          "type": "int"
+        }
+      ]
+    },
+    "output_schema": {
+      "type": "array",
+      "items": "int",
+      "minItems": 2,
+      "maxItems": 2
+    },
+    "checker": {
+      "name": "unordered_pairs",
+      "description": "返回的两个索引顺序不重要"
+    },
+    "adapter": {
+      "input": {
+        "nums": {
+          "kind": "builtin"
+        }
+      },
+      "output": {
+        "kind": "builtin"
+      }
+    },
+    "limits": {
+      "max_events": 1000
+    },
+    "reference": {
+      "platform": "LeetCode",
+      "id": 1,
+      "title": "Two Sum",
+      "usage": "compatibility reference only"
+    }
+  },
+  "run": {
+    "language": "python",
+    "entry": {
+      "class_name": "Solution",
+      "method_name": "twoSum"
+    },
+    "input": {
+      "nums": [
+        2,
+        7,
+        11,
+        15
+      ],
+      "target": 9
+    },
+    "expected": [
+      0,
+      1
+    ],
+    "actual": [
+      0,
+      1
+    ],
+    "status": "passed",
+    "total_steps": 6,
+    "truncated": false
+  },
+  "events": [
+    {
+      "step": 1,
+      "event_type": "array_read",
+      "message": "读取 nums[0] = 2（索引 0，值 2）",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "arr:nums"
+        ],
+        "indices": {
+          "arr:nums": [
+            0
+          ]
+        }
+      },
+      "before": {
+        "i": 0,
+        "num": 2,
+        "map:seen": {}
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "遍历数组，一次只看一个元素。"
+      },
+      "line": null,
+      "timestamp_ms": 1782384481783
+    },
+    {
+      "step": 2,
+      "event_type": "hash_map_get",
+      "message": "需要补数 7（因为 2 + 7 = 9），检查哈希表...",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "map:seen"
+        ]
+      },
+      "before": {
+        "complement": 7,
+        "map:seen": {}
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "查哈希表 O(1)，看补数是否存在。"
+      },
+      "line": null,
+      "timestamp_ms": 1782384481783
+    },
+    {
+      "step": 3,
+      "event_type": "hash_map_put",
+      "message": "把 2 → 索引 0 记录下来，以后可以快速查找",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "map:seen"
+        ]
+      },
+      "before": {
+        "map:seen": {
+          "2": 0
+        }
+      },
+      "after": {
+        "map:seen": {
+          "2": 0
+        }
+      },
+      "pedagogy": {
+        "why_now": "当前没找到答案，先记录以便后续查找。"
+      },
+      "line": null,
+      "timestamp_ms": 1782384481783
+    },
+    {
+      "step": 4,
+      "event_type": "array_read",
+      "message": "读取 nums[1] = 7（索引 1，值 7）",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "arr:nums"
+        ],
+        "indices": {
+          "arr:nums": [
+            1
+          ]
+        }
+      },
+      "before": {
+        "i": 1,
+        "num": 7,
+        "map:seen": {
+          "2": 0
+        }
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "遍历数组，一次只看一个元素。"
+      },
+      "line": null,
+      "timestamp_ms": 1782384481783
+    },
+    {
+      "step": 5,
+      "event_type": "hash_map_get",
+      "message": "需要补数 2（因为 7 + 2 = 9），检查哈希表...",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "map:seen"
+        ]
+      },
+      "before": {
+        "complement": 2,
+        "map:seen": {
+          "2": 0
+        }
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "查哈希表 O(1)，看补数是否存在。"
+      },
+      "line": null,
+      "timestamp_ms": 1782384481783
+    },
+    {
+      "step": 6,
+      "event_type": "answer_found",
+      "message": "找到了！补数 2 在索引 0，加上当前索引 1 → [0, 1]",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "map:seen"
+        ],
+        "indices": {}
+      },
+      "before": null,
+      "after": {
+        "result": [
+          0,
+          1
+        ]
+      },
+      "pedagogy": {
+        "mental_model": "哈希表像一本快速查找的字典，key 是见过的值，value 是它的位置。"
+      },
+      "line": null,
+      "timestamp_ms": 1782384481783
+    }
+  ]
+}

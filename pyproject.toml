@@ -1,0 +1,13 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "programming-visualization"
+version = "0.1.0"
+description = "面向非科班/文科背景/自学开发者的 LeetCode-style 编程可视化学习器"
+requires-python = ">=3.10"
+dependencies = []
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pv"]

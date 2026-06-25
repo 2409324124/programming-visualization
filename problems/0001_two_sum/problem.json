@@ -1,0 +1,42 @@
+{
+  "problem_id": "0001_two_sum",
+  "display_title": "两数之和",
+  "pattern_tags": ["array", "hash_map"],
+  "difficulty": "easy",
+  "entry": {
+    "class_name": "Solution",
+    "method_name": "twoSum"
+  },
+  "input_schema": {
+    "type": "object",
+    "fields": [
+      {"name": "nums", "type": "array", "items": "int"},
+      {"name": "target", "type": "int"}
+    ]
+  },
+  "output_schema": {
+    "type": "array",
+    "items": "int",
+    "minItems": 2,
+    "maxItems": 2
+  },
+  "checker": {
+    "name": "unordered_pairs",
+    "description": "返回的两个索引顺序不重要"
+  },
+  "adapter": {
+    "input": {
+      "nums": {"kind": "builtin"}
+    },
+    "output": {"kind": "builtin"}
+  },
+  "limits": {
+    "max_events": 1000
+  },
+  "reference": {
+    "platform": "LeetCode",
+    "id": 1,
+    "title": "Two Sum",
+    "usage": "compatibility reference only"
+  }
+}

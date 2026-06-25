@@ -24,3 +24,9 @@ tmp/
 
 # Generated assets
 outputs/
+
+# Generated trace files (keep trace.sample.json as stable sample)
+problems/*/trace.case*.json
+
+# Editable install artifacts (setuptools)
+src/*.egg-info/
