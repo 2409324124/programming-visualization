@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.env
+
+# Node / frontend
+node_modules/
+dist/
+build/
+.next/
+.vite/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Logs / temp
+*.log
+.tmp/
+tmp/
+
+# Generated assets
+outputs/
