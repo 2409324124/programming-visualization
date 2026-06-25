@@ -1,0 +1,772 @@
+{
+  "trace_version": "0.1.0",
+  "problem": {
+    "problem_id": "0011_container_with_most_water",
+    "display_title": "盛最多水的容器",
+    "pattern_tags": [
+      "two_pointers",
+      "greedy"
+    ],
+    "difficulty": "medium",
+    "entry": {
+      "class_name": "Solution",
+      "method_name": "maxArea"
+    },
+    "input_schema": {
+      "type": "object",
+      "fields": [
+        {
+          "name": "height",
+          "type": "array",
+          "items": "int"
+        }
+      ]
+    },
+    "output_schema": {
+      "type": "int",
+      "description": "最大面积"
+    },
+    "checker": {
+      "name": "exact",
+      "description": "面积是单个整数，直接比较即可"
+    },
+    "adapter": {
+      "input": {
+        "height": {
+          "kind": "builtin"
+        }
+      },
+      "output": {
+        "kind": "builtin"
+      }
+    },
+    "limits": {
+      "max_events": 1000
+    },
+    "reference": {
+      "platform": "LeetCode",
+      "id": 11,
+      "title": "Container With Most Water",
+      "usage": "compatibility reference only"
+    }
+  },
+  "run": {
+    "language": "python",
+    "entry": {
+      "class_name": "Solution",
+      "method_name": "maxArea"
+    },
+    "input": {
+      "height": [
+        1,
+        8,
+        6,
+        2,
+        5,
+        4,
+        8,
+        3,
+        7
+      ]
+    },
+    "expected": 49,
+    "actual": 49,
+    "status": "passed",
+    "total_steps": 28,
+    "truncated": false
+  },
+  "events": [
+    {
+      "step": 1,
+      "event_type": "pointer_init",
+      "message": "初始化指针：left=0（高度=1），right=8（高度=7）",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:left",
+          "ptr:right"
+        ]
+      },
+      "before": {
+        "left": 0,
+        "right": 8,
+        "height": [
+          1,
+          8,
+          6,
+          2,
+          5,
+          4,
+          8,
+          3,
+          7
+        ]
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "双指针从数组两端开始，宽度最大时先计算面积，然后逐步缩小。",
+        "mental_model": "想象两块板子之间的距离就是容器的宽度，短板决定了能装多少水。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 2,
+      "event_type": "area_compute",
+      "message": "当前 left=0（高度=1），right=8（高度=7），宽度=8，较短高度=1，面积=8",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:left",
+          "ptr:right"
+        ],
+        "indices": {
+          "arr:height": [
+            0,
+            8
+          ]
+        }
+      },
+      "before": {
+        "left": 0,
+        "right": 8,
+        "left_h": 1,
+        "right_h": 7,
+        "width": 8,
+        "height_min": 1,
+        "area": 8,
+        "best": 0
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "面积 = 宽度(8) × 较短高度(1)。任何向内移动都会减少宽度，所以只有移动短板才有可能让高度变大、面积更大。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 3,
+      "event_type": "best_update",
+      "message": "更新最大面积！新的最佳面积 = 8",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:left",
+          "ptr:right"
+        ]
+      },
+      "before": null,
+      "after": {
+        "best": 8
+      },
+      "pedagogy": {
+        "why_now": "当前的容器比之前找到的都要大，记录下来。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 4,
+      "event_type": "comparison_reason",
+      "message": "左侧高度(1) < 右侧高度(7)，移动左指针（因为短板在左边，移动它才有可能让高度增加）",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:left"
+        ]
+      },
+      "before": {
+        "left": 0,
+        "left_h": 1,
+        "right_h": 7
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "为什么移动更短的一侧？因为面积取决于短板的高度。如果移动长板，宽度减小而短板高度不变，面积只可能更小。移动短板才有机会遇到更高的板。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 5,
+      "event_type": "pointer_move",
+      "message": "左指针右移 → left=1",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:left"
+        ]
+      },
+      "before": null,
+      "after": {
+        "left": 1,
+        "right": 8
+      },
+      "pedagogy": null,
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 6,
+      "event_type": "area_compute",
+      "message": "当前 left=1（高度=8），right=8（高度=7），宽度=7，较短高度=7，面积=49",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:left",
+          "ptr:right"
+        ],
+        "indices": {
+          "arr:height": [
+            1,
+            8
+          ]
+        }
+      },
+      "before": {
+        "left": 1,
+        "right": 8,
+        "left_h": 8,
+        "right_h": 7,
+        "width": 7,
+        "height_min": 7,
+        "area": 49,
+        "best": 8
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "面积 = 宽度(7) × 较短高度(7)。任何向内移动都会减少宽度，所以只有移动短板才有可能让高度变大、面积更大。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 7,
+      "event_type": "best_update",
+      "message": "更新最大面积！新的最佳面积 = 49",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:left",
+          "ptr:right"
+        ]
+      },
+      "before": null,
+      "after": {
+        "best": 49
+      },
+      "pedagogy": {
+        "why_now": "当前的容器比之前找到的都要大，记录下来。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 8,
+      "event_type": "comparison_reason",
+      "message": "右侧高度(7) <= 左侧高度(8)，移动右指针（因为短板在右边，移动它才有可能让高度增加）",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:right"
+        ]
+      },
+      "before": {
+        "right": 8,
+        "left_h": 8,
+        "right_h": 7
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "同理，面积由短板决定。移动长板不会增加面积上限，所以向内移动短板。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 9,
+      "event_type": "pointer_move",
+      "message": "右指针左移 → right=7",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:right"
+        ]
+      },
+      "before": null,
+      "after": {
+        "left": 1,
+        "right": 7
+      },
+      "pedagogy": null,
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 10,
+      "event_type": "area_compute",
+      "message": "当前 left=1（高度=8），right=7（高度=3），宽度=6，较短高度=3，面积=18",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:left",
+          "ptr:right"
+        ],
+        "indices": {
+          "arr:height": [
+            1,
+            7
+          ]
+        }
+      },
+      "before": {
+        "left": 1,
+        "right": 7,
+        "left_h": 8,
+        "right_h": 3,
+        "width": 6,
+        "height_min": 3,
+        "area": 18,
+        "best": 49
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "面积 = 宽度(6) × 较短高度(3)。任何向内移动都会减少宽度，所以只有移动短板才有可能让高度变大、面积更大。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 11,
+      "event_type": "comparison_reason",
+      "message": "右侧高度(3) <= 左侧高度(8)，移动右指针（因为短板在右边，移动它才有可能让高度增加）",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:right"
+        ]
+      },
+      "before": {
+        "right": 7,
+        "left_h": 8,
+        "right_h": 3
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "同理，面积由短板决定。移动长板不会增加面积上限，所以向内移动短板。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 12,
+      "event_type": "pointer_move",
+      "message": "右指针左移 → right=6",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:right"
+        ]
+      },
+      "before": null,
+      "after": {
+        "left": 1,
+        "right": 6
+      },
+      "pedagogy": null,
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 13,
+      "event_type": "area_compute",
+      "message": "当前 left=1（高度=8），right=6（高度=8），宽度=5，较短高度=8，面积=40",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:left",
+          "ptr:right"
+        ],
+        "indices": {
+          "arr:height": [
+            1,
+            6
+          ]
+        }
+      },
+      "before": {
+        "left": 1,
+        "right": 6,
+        "left_h": 8,
+        "right_h": 8,
+        "width": 5,
+        "height_min": 8,
+        "area": 40,
+        "best": 49
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "面积 = 宽度(5) × 较短高度(8)。任何向内移动都会减少宽度，所以只有移动短板才有可能让高度变大、面积更大。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 14,
+      "event_type": "comparison_reason",
+      "message": "右侧高度(8) <= 左侧高度(8)，移动右指针（因为短板在右边，移动它才有可能让高度增加）",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:right"
+        ]
+      },
+      "before": {
+        "right": 6,
+        "left_h": 8,
+        "right_h": 8
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "同理，面积由短板决定。移动长板不会增加面积上限，所以向内移动短板。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 15,
+      "event_type": "pointer_move",
+      "message": "右指针左移 → right=5",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:right"
+        ]
+      },
+      "before": null,
+      "after": {
+        "left": 1,
+        "right": 5
+      },
+      "pedagogy": null,
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 16,
+      "event_type": "area_compute",
+      "message": "当前 left=1（高度=8），right=5（高度=4），宽度=4，较短高度=4，面积=16",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:left",
+          "ptr:right"
+        ],
+        "indices": {
+          "arr:height": [
+            1,
+            5
+          ]
+        }
+      },
+      "before": {
+        "left": 1,
+        "right": 5,
+        "left_h": 8,
+        "right_h": 4,
+        "width": 4,
+        "height_min": 4,
+        "area": 16,
+        "best": 49
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "面积 = 宽度(4) × 较短高度(4)。任何向内移动都会减少宽度，所以只有移动短板才有可能让高度变大、面积更大。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 17,
+      "event_type": "comparison_reason",
+      "message": "右侧高度(4) <= 左侧高度(8)，移动右指针（因为短板在右边，移动它才有可能让高度增加）",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:right"
+        ]
+      },
+      "before": {
+        "right": 5,
+        "left_h": 8,
+        "right_h": 4
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "同理，面积由短板决定。移动长板不会增加面积上限，所以向内移动短板。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 18,
+      "event_type": "pointer_move",
+      "message": "右指针左移 → right=4",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:right"
+        ]
+      },
+      "before": null,
+      "after": {
+        "left": 1,
+        "right": 4
+      },
+      "pedagogy": null,
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 19,
+      "event_type": "area_compute",
+      "message": "当前 left=1（高度=8），right=4（高度=5），宽度=3，较短高度=5，面积=15",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:left",
+          "ptr:right"
+        ],
+        "indices": {
+          "arr:height": [
+            1,
+            4
+          ]
+        }
+      },
+      "before": {
+        "left": 1,
+        "right": 4,
+        "left_h": 8,
+        "right_h": 5,
+        "width": 3,
+        "height_min": 5,
+        "area": 15,
+        "best": 49
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "面积 = 宽度(3) × 较短高度(5)。任何向内移动都会减少宽度，所以只有移动短板才有可能让高度变大、面积更大。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 20,
+      "event_type": "comparison_reason",
+      "message": "右侧高度(5) <= 左侧高度(8)，移动右指针（因为短板在右边，移动它才有可能让高度增加）",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:right"
+        ]
+      },
+      "before": {
+        "right": 4,
+        "left_h": 8,
+        "right_h": 5
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "同理，面积由短板决定。移动长板不会增加面积上限，所以向内移动短板。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 21,
+      "event_type": "pointer_move",
+      "message": "右指针左移 → right=3",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:right"
+        ]
+      },
+      "before": null,
+      "after": {
+        "left": 1,
+        "right": 3
+      },
+      "pedagogy": null,
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 22,
+      "event_type": "area_compute",
+      "message": "当前 left=1（高度=8），right=3（高度=2），宽度=2，较短高度=2，面积=4",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:left",
+          "ptr:right"
+        ],
+        "indices": {
+          "arr:height": [
+            1,
+            3
+          ]
+        }
+      },
+      "before": {
+        "left": 1,
+        "right": 3,
+        "left_h": 8,
+        "right_h": 2,
+        "width": 2,
+        "height_min": 2,
+        "area": 4,
+        "best": 49
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "面积 = 宽度(2) × 较短高度(2)。任何向内移动都会减少宽度，所以只有移动短板才有可能让高度变大、面积更大。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 23,
+      "event_type": "comparison_reason",
+      "message": "右侧高度(2) <= 左侧高度(8)，移动右指针（因为短板在右边，移动它才有可能让高度增加）",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:right"
+        ]
+      },
+      "before": {
+        "right": 3,
+        "left_h": 8,
+        "right_h": 2
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "同理，面积由短板决定。移动长板不会增加面积上限，所以向内移动短板。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 24,
+      "event_type": "pointer_move",
+      "message": "右指针左移 → right=2",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:right"
+        ]
+      },
+      "before": null,
+      "after": {
+        "left": 1,
+        "right": 2
+      },
+      "pedagogy": null,
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 25,
+      "event_type": "area_compute",
+      "message": "当前 left=1（高度=8），right=2（高度=6），宽度=1，较短高度=6，面积=6",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:left",
+          "ptr:right"
+        ],
+        "indices": {
+          "arr:height": [
+            1,
+            2
+          ]
+        }
+      },
+      "before": {
+        "left": 1,
+        "right": 2,
+        "left_h": 8,
+        "right_h": 6,
+        "width": 1,
+        "height_min": 6,
+        "area": 6,
+        "best": 49
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "面积 = 宽度(1) × 较短高度(6)。任何向内移动都会减少宽度，所以只有移动短板才有可能让高度变大、面积更大。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 26,
+      "event_type": "comparison_reason",
+      "message": "右侧高度(6) <= 左侧高度(8)，移动右指针（因为短板在右边，移动它才有可能让高度增加）",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:right"
+        ]
+      },
+      "before": {
+        "right": 2,
+        "left_h": 8,
+        "right_h": 6
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "同理，面积由短板决定。移动长板不会增加面积上限，所以向内移动短板。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 27,
+      "event_type": "pointer_move",
+      "message": "右指针左移 → right=1",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:right"
+        ]
+      },
+      "before": null,
+      "after": {
+        "left": 1,
+        "right": 1
+      },
+      "pedagogy": null,
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 28,
+      "event_type": "return",
+      "message": "双指针相遇，结束。最大面积 = 49",
+      "phase": "execute",
+      "highlight": null,
+      "before": null,
+      "after": {
+        "result": 49
+      },
+      "pedagogy": {
+        "mental_model": "从两端向中间扫描，每次只移动短板，必然不会错过最大面积。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    }
+  ]
+}

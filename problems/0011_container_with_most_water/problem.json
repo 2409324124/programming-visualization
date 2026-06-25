@@ -1,0 +1,39 @@
+{
+  "problem_id": "0011_container_with_most_water",
+  "display_title": "盛最多水的容器",
+  "pattern_tags": ["two_pointers", "greedy"],
+  "difficulty": "medium",
+  "entry": {
+    "class_name": "Solution",
+    "method_name": "maxArea"
+  },
+  "input_schema": {
+    "type": "object",
+    "fields": [
+      {"name": "height", "type": "array", "items": "int"}
+    ]
+  },
+  "output_schema": {
+    "type": "int",
+    "description": "最大面积"
+  },
+  "checker": {
+    "name": "exact",
+    "description": "面积是单个整数，直接比较即可"
+  },
+  "adapter": {
+    "input": {
+      "height": {"kind": "builtin"}
+    },
+    "output": {"kind": "builtin"}
+  },
+  "limits": {
+    "max_events": 1000
+  },
+  "reference": {
+    "platform": "LeetCode",
+    "id": 11,
+    "title": "Container With Most Water",
+    "usage": "compatibility reference only"
+  }
+}
