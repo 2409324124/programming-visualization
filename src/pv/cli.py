@@ -290,6 +290,50 @@ def cmd_render_html(args: argparse.Namespace) -> None:
         print(html_output)
 
 
+# ── subcommand: render-story ───────────────────────────────────────────
+
+
+def cmd_render_story(args: argparse.Namespace) -> None:
+    """Execute the 'render-story' subcommand."""
+    trace_path = args.trace_json_path
+    
+    if not os.path.isfile(trace_path):
+        print(f"错误: trace 文件不存在: {trace_path}", file=sys.stderr)
+        sys.exit(1)
+    
+    try:
+        with open(trace_path, encoding="utf-8") as f:
+            trace_data = json.load(f)
+    except (json.JSONDecodeError, OSError) as exc:
+        print(f"错误: 无法读取 trace 文件: {exc}", file=sys.stderr)
+        sys.exit(1)
+    
+    try:
+        from pv.storyboard import build_storyboard
+        from pv.render_story_html import render_story_to_html
+    except ImportError as e:
+        print(f"错误: storyboard 模块尚未实现: {e}", file=sys.stderr)
+        sys.exit(1)
+    
+    try:
+        frames = build_storyboard(trace_data)
+    except (ValueError, NotImplementedError) as e:
+        print(f"错误: {e}", file=sys.stderr)
+        sys.exit(1)
+    
+    title = trace_data.get("problem", {}).get("display_title", "Storyboard")
+    html_output = render_story_to_html(frames, title=f"{title} — 执行动画")
+    
+    output_path = args.output
+    if output_path:
+        os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write(html_output)
+        print(f"HTML 已写入: {output_path}")
+    else:
+        print(html_output)
+
+
 # ── main ───────────────────────────────────────────────────────────────
 
 
@@ -323,6 +367,11 @@ def main():
     render_html_parser.add_argument("trace_json_path", help="trace JSON 文件路径")
     render_html_parser.add_argument("--output", "-o", help="输出 HTML 文件路径（不指定则打印到 stdout）")
 
+    # render-story subcommand
+    render_story_parser = subparsers.add_parser("render-story", help="渲染 trace JSON 为故事动画 HTML")
+    render_story_parser.add_argument("trace_json_path", help="trace JSON 文件路径")
+    render_story_parser.add_argument("--output", "-o", help="输出 HTML 文件路径（不指定则打印到 stdout）")
+
     args = parser.parse_args()
 
     if args.command == "run":
@@ -331,5 +380,7 @@ def main():
         cmd_render_text(args)
     elif args.command == "render-html":
         cmd_render_html(args)
+    elif args.command == "render-story":
+        cmd_render_story(args)
     else:
         parser.print_help()

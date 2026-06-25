@@ -7,6 +7,8 @@
 
 [→ 在线 Demo Gallery](https://2409324124.github.io/programming-visualization/examples/)
 
+- [Two Sum Story Animation](https://2409324124.github.io/programming-visualization/examples/story_0001_two_sum.case0.html)
+
 > 本地查看：打开 `examples/index.html`。
 
 目标不是复制 LeetCode，也不是再做一个题解站，而是把经典 `class Solution` 的执行过程变成可理解的可视化故事：
@@ -47,6 +49,9 @@ uv run python -m pv render-text problems/0001_two_sum/trace.sample.json
 
 # 7. 渲染为 HTML（支持 DP table、链表、数组可视化）
 uv run python -m pv render-html problems/0070_climbing_stairs/trace.sample.json --output examples/0070_climbing_stairs.case0.html
+
+# 8. 生成故事动画 (Two Sum)
+uv run python -m pv render-story problems/0001_two_sum/trace.sample.json --output examples/story_0001_two_sum.case0.html
 ```
 
 > 如果不使用 uv，可以用标准 venv：`python3 -m venv .venv && source .venv/bin/activate && pip install -e .`，之后不需要 `uv run` 前缀。
@@ -69,6 +74,8 @@ uv run python -m pv render-html problems/0070_climbing_stairs/trace.sample.json 
 | Linked List Node-Edge | Node boxes + arrow edges + prev/curr/next labels | ✅ |
 | DP Table | Cell grid with read (blue) and write (orange) highlights | ✅ |
 | Vectorized / NumPy | Operation graph trace | 🔮 design doc only |
+
+> The story animation renderer (`render-story`) turns selected curated traces into spatial animations with moving objects, arrows, and color-coded states. Currently supports Two Sum.
 
 ## Learner Mode
 
