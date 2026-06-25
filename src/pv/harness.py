@@ -3,20 +3,24 @@
 from __future__ import annotations
 
 import importlib.util
+import io
 import json
 import os
 import uuid
+from contextlib import redirect_stderr, redirect_stdout
 
 from pv.errors import (
     CasesInvalid,
     CasesLoadError,
     ClassNotFoundError,
+    ImportPolicyError,
     MethodNotFoundError,
     ProblemLoadError,
     ProblemMetaInvalid,
     PVError,
     SolutionImportError,
 )
+from pv.submission_policy import check_imports
 from pv.trace_schema import TraceBuilder
 from pv.checkers import check
 from pv.adapters import adapt_input, adapt_output
@@ -159,12 +163,15 @@ def run_case(
                 detail=f"模块中未找到类 '{class_name}'。",
             )
 
-        # 3. Instantiate (try passing trace if saving; fall back to no-arg)
+        # 3. Instantiate (try passing trace if saving; track acceptance)
+        trace_supported = False
         if save_trace:
             try:
                 instance = cls(trace=trace)
+                trace_supported = True
             except TypeError:
                 instance = cls()
+                trace_supported = False
         else:
             instance = cls()
 
@@ -180,8 +187,13 @@ def run_case(
         adapter_config = problem_meta.get("adapter")
         adapted_args = adapt_input(case["args"], adapter_config)
 
-        # 6. Call the method
-        result = method(**adapted_args)
+        # 6. Call the method (capture stdout/stderr so learner prints don't leak)
+        captured_stdout = io.StringIO()
+        captured_stderr = io.StringIO()
+        with redirect_stdout(captured_stdout), redirect_stderr(captured_stderr):
+            result = method(**adapted_args)
+        stdout_str = captured_stdout.getvalue()
+        stderr_str = captured_stderr.getvalue()
 
         # 7. Adapt output
         normalized = adapt_output(result, adapter_config)
@@ -200,6 +212,14 @@ def run_case(
         else:
             trace_path = None
 
+        # Determine trace_mode
+        if trace_supported and trace is not None and trace.step_count > 0:
+            trace_mode = "semantic"
+        elif save_trace and not trace_supported:
+            trace_mode = "validation_only"
+        else:
+            trace_mode = "none"
+
         return {
             "case_name": case_name,
             "passed": passed,
@@ -210,6 +230,9 @@ def run_case(
             "trace_path": trace_path,
             "step_count": trace.step_count if trace else 0,
             "truncated": trace._truncated if trace else False,
+            "trace_mode": trace_mode,
+            "stdout": stdout_str,
+            "stderr": stderr_str,
         }
 
     except PVError as exc:
@@ -233,6 +256,9 @@ def run_case(
             "trace_path": trace_path,
             "step_count": trace.step_count if trace else 0,
             "truncated": trace._truncated if trace else False,
+            "trace_mode": "none",
+            "stdout": "",
+            "stderr": "",
         }
 
     except Exception as exc:
@@ -256,6 +282,9 @@ def run_case(
             "trace_path": trace_path,
             "step_count": trace.step_count if trace else 0,
             "truncated": trace._truncated if trace else False,
+            "trace_mode": "none",
+            "stdout": "",
+            "stderr": "",
         }
 
 
@@ -268,6 +297,14 @@ def run_all_cases(
     problem_meta = load_problem_meta(problem_dir)
     cases = load_cases(problem_dir)
     solution_path = os.path.join(problem_dir, solution_file)
+
+    # Check import policy before running any cases
+    policy_result = check_imports(solution_path)
+    if not policy_result["ok"]:
+        msg = "代码包含不允许的导入：\n" + "\n".join(
+            f"  • {v}" for v in policy_result["violations"]
+        )
+        raise ImportPolicyError(detail=msg, user_message=msg)
 
     results: list[dict] = []
     for i, case in enumerate(cases):

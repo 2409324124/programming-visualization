@@ -108,3 +108,15 @@ class TraceLimitExceeded(PVError):
         message = message or "trace event 数量超过 max_events 限制。"
         user_message = user_message or "代码执行步骤过多，可能陷入了死循环。请检查代码中的循环逻辑。"
         super().__init__(message, detail, user_message)
+
+
+class ImportPolicyError(PVError):
+    """Solution imports a disallowed or unsupported module."""
+
+    def __init__(self, message: str = "", detail: str = "", user_message: str = ""):
+        message = message or "代码包含不允许的 import。"
+        user_message = user_message or "代码中使用了不允许的导入模块。"
+        super().__init__(message, detail, user_message)
+
+
+

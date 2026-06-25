@@ -9,7 +9,8 @@ import sys
 from typing import Any
 
 from pv.harness import load_problem_meta, load_cases, run_case, run_all_cases
-from pv.errors import PVError
+from pv.submission_policy import check_imports
+from pv.errors import ImportPolicyError, PVError
 
 
 # ── helpers ────────────────────────────────────────────────────────────
@@ -112,6 +113,19 @@ def cmd_run(args: argparse.Namespace) -> None:
     results: list[dict] = []
     saved_trace_paths: list[str] = []
 
+    # Check import policy before running cases
+    solution_path = os.path.join(problem_dir, solution_file)
+    policy_result = check_imports(solution_path)
+    if not policy_result["ok"]:
+        msg = "代码包含不允许的导入：\n" + "\n".join(
+            f"  • {v}" for v in policy_result["violations"]
+        )
+        print(f"错误: {msg}", file=sys.stderr)
+        sys.exit(1)
+    if policy_result.get("warnings"):
+        for w in policy_result["warnings"]:
+            print(f"警告: {w}", file=sys.stderr)
+
     for case_index, case in selected_cases:
         try:
             result = run_case(
@@ -134,6 +148,9 @@ def cmd_run(args: argparse.Namespace) -> None:
                 "trace_path": None,
                 "step_count": 0,
                 "truncated": False,
+                "trace_mode": "none",
+                "stdout": "",
+                "stderr": "",
             }
 
         results.append(result)
@@ -161,6 +178,17 @@ def cmd_run(args: argparse.Namespace) -> None:
         # Step count (事件数) — only when no error
         if not result["error"] and result.get("step_count"):
             print(f"  事件数: {result['step_count']}")
+
+        # Trace availability
+        trace_mode = result.get("trace_mode", "none")
+        if trace_mode == "validation_only" and save_trace:
+            print("  trace: validation only（代码无追踪钩子，只记录输入输出）")
+
+        # Print warning if code used print() instead of return
+        stdout_val = result.get("stdout", "")
+        if stdout_val:
+            truncated = stdout_val[:200] + "..." if len(stdout_val) > 200 else stdout_val
+            print(f"  ⚠ 代码有 print 输出（{truncated}），但判题只看 return 值。如果答案不对，请检查是否忘了 return。")
 
         print()
 
