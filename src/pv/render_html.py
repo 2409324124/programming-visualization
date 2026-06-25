@@ -42,6 +42,13 @@ footer .status.failed{color:#c62828}
 .ll-arrow.hl::after{border-left-color:#ff9800}
 .ll-label{position:absolute;top:-22px;font-size:.7rem;color:#888;white-space:nowrap;left:50%;transform:translateX(-50%)}
 .ll-null{width:48px;height:48px;display:flex;align-items:center;justify-content:center;border:2px dashed #ccc;border-radius:8px;color:#999;font-size:.8rem;flex-shrink:0}
+.dp-table{display:flex;gap:4px;flex-wrap:wrap;margin:1rem 0;align-items:flex-end}
+.dp-cell{width:52px;min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;border:2px solid #e0e0e0;border-radius:6px;background:#fafafa;padding:4px;transition:all .2s}
+.dp-cell .dp-idx{font-size:.7rem;color:#999;margin-bottom:2px}
+.dp-cell .dp-val{font-weight:700;font-size:.95rem;color:#333;min-height:20px}
+.dp-cell.hl-read{background:#e3f2fd;border-color:#42a5f5;box-shadow:0 0 0 2px #90caf9}
+.dp-cell.hl-write{background:#fff3e0;border-color:#ff9800;box-shadow:0 0 0 2px #ffb74d}
+.dp-cell.filled{background:#e8f5e9;border-color:#66bb6a}
 """
 
 TEMPLATE = """\
@@ -98,11 +105,56 @@ def _render_linked_list_input(key: str, vals: list) -> str:
     return "\n".join(parts)
 
 
-def _render_input_panel(run: dict, problem: dict | None = None) -> str:
+def _render_dp_table(problem: dict, run: dict, events: list[dict]) -> str:
+    """Render a DP table visualization for dynamic-programming problems.
+
+    Renders ``n+1`` cells (index 0 through n) with index labels.
+    Cells for dp[0] and dp[1] are pre-filled with value 1 (the base cases
+    for climbing stairs).  Remaining cells are left empty for the JS layer
+    to fill dynamically as the user steps through events.
+    """
+    inp = run.get("input", {})
+    n = inp.get("n")
+    if not isinstance(n, int) or n < 0:
+        return ""
+
+    # Determine final dp state from events (dp_write events)
+    filled: dict[int, int] = {0: 1, 1: 1}
+    for ev in events:
+        before = ev.get("before") or {}
+        after = ev.get("after") or {}
+        # Look for dp_write events that have explicit index info
+        if ev.get("event_type") in ("update_dp", "dp_write"):
+            idx = after.get("dp_idx") or before.get("dp_idx")
+            val = after.get("dp") or after.get("dp_val")
+            if isinstance(idx, int) and val is not None:
+                filled[idx] = val
+
+    parts: list[str] = ['<div><strong>DP 表:</strong></div>']
+    parts.append('<div class="dp-table">')
+    for i in range(n + 1):
+        val = filled.get(i)
+        val_html = _esc(val) if val is not None else ""
+        cls = "dp-cell filled" if val is not None else "dp-cell"
+        parts.append(
+            f'<div class="{cls}" data-dp-idx="{i}">'
+            f'<span class="dp-idx">{i}</span>'
+            f'<span class="dp-val">{val_html}</span>'
+            f'</div>'
+        )
+    parts.append('</div>')
+    return "\n".join(parts)
+
+
+def _render_input_panel(run: dict, problem: dict | None = None,
+                        events: list[dict] | None = None) -> str:
     inp = run.get("input", {})
     if not inp:
         return ""
     is_linked_list = problem is not None and "linked_list" in problem.get("pattern_tags", [])
+    is_dp = (problem is not None
+             and "dynamic_programming" in problem.get("pattern_tags", [])
+             and isinstance(run.get("input", {}).get("n"), int))
     parts: list[str] = ['<section class="input-panel"><h2>输入</h2>']
     for key, val in inp.items():
         if isinstance(val, list) and val and all(isinstance(x, (int, float)) for x in val):
@@ -116,6 +168,11 @@ def _render_input_panel(run: dict, problem: dict | None = None) -> str:
                 parts.append('</div>')
         else:
             parts.append(f'<div><strong>{_esc(key)}:</strong> {_format_val(val)}</div>')
+    # DP table visualization
+    if is_dp and events is not None:
+        parts.append(_render_dp_table(problem, run, events))
+    elif is_dp:
+        parts.append(_render_dp_table(problem, run, []))
     parts.append('</section>')
     return "\n".join(parts)
 
@@ -180,19 +237,22 @@ def _render_footer(run: dict) -> str:
 def _apply_highlights(html_str: str, events: list[dict]) -> str:
     """Post-process the HTML to add highlight classes using a <script> block.
 
-    The script runs on page load and highlights array cells and linked-list
-    nodes for the currently hovered step based on highlight.indices data
-    embedded in data attributes.
+    The script runs on page load and highlights array cells, linked-list
+    nodes, and DP table cells for the currently hovered step based on
+    highlight.indices data embedded in data attributes.
 
     Supported index prefixes:
-    - ``arr:`` → highlights ``.array-cell[data-idx="N"]``
-    - ``ll:``  → highlights ``.ll-node[data-ll-idx="N"]``
+    - ``arr:``      → highlights ``.array-cell[data-idx="N"]``
+    - ``ll:``       → highlights ``.ll-node[data-ll-idx="N"]``
+    - ``dp:table``  → highlights ``.dp-cell[data-dp-idx="N"]``
+                       (all but last index → hl-read, last index → hl-write)
     """
     if not events:
         return html_str
     # Collect per-step highlight indices, keyed by target type
     arr_hl: dict[int, list[int]] = {}
     ll_hl: dict[int, list[int]] = {}
+    dp_hl: dict[int, list[int]] = {}
     for ev in events:
         step = ev.get("step")
         hl = ev.get("highlight")
@@ -205,21 +265,27 @@ def _apply_highlights(html_str: str, events: list[dict]) -> str:
                     arr_hl.setdefault(step, []).extend(idx_list)
                 elif obj_key.startswith("ll:"):
                     ll_hl.setdefault(step, []).extend(idx_list)
-    if not arr_hl and not ll_hl:
+                elif obj_key == "dp:table":
+                    dp_hl.setdefault(step, []).extend(idx_list)
+    if not arr_hl and not ll_hl and not dp_hl:
         return html_str
     arr_json = json.dumps(arr_hl, ensure_ascii=False)
     ll_json = json.dumps(ll_hl, ensure_ascii=False)
+    dp_json = json.dumps(dp_hl, ensure_ascii=False)
     script = f"""\
 <script>
 (function(){{
   var arrHl={arr_json};
   var llHl={ll_json};
+  var dpHl={dp_json};
   var steps=document.querySelectorAll('.step');
   var cells=document.querySelectorAll('.array-cell');
   var nodes=document.querySelectorAll('.ll-node');
+  var dpCells=document.querySelectorAll('.dp-cell');
   function clear(){{
     for(var i=0;i<cells.length;i++)cells[i].classList.remove('hl');
     for(var i=0;i<nodes.length;i++)nodes[i].classList.remove('hl');
+    for(var i=0;i<dpCells.length;i++)dpCells[i].classList.remove('hl-read','hl-write');
   }}
   for(var i=0;i<steps.length;i++){{
     steps[i].addEventListener('mouseenter',function(){{
@@ -234,6 +300,16 @@ def _apply_highlights(html_str: str, events: list[dict]) -> str:
       if(lIdxs)for(var j=0;j<lIdxs.length;j++){{
         var n=document.querySelector('.ll-node[data-ll-idx="'+lIdxs[j]+'"]');
         if(n)n.classList.add('hl');
+      }}
+      var dIdxs=dpHl[s];
+      if(dIdxs){{
+        for(var j=0;j<dIdxs.length;j++){{
+          var dc=document.querySelector('.dp-cell[data-dp-idx="'+dIdxs[j]+'"]');
+          if(dc){{
+            if(j<dIdxs.length-1)dc.classList.add('hl-read');
+            else dc.classList.add('hl-write');
+          }}
+        }}
       }}
     }});
     steps[i].addEventListener('mouseleave',clear);
@@ -263,7 +339,7 @@ def render_trace_to_html(trace_dict: dict) -> str:
     title = _esc(problem.get("display_title", "Program Trace"))
     body_parts: list[str] = [
         _render_header(problem),
-        _render_input_panel(run, problem),
+        _render_input_panel(run, problem, events),
         '<section class="timeline"><h2>执行过程</h2>',
     ]
     if not events:

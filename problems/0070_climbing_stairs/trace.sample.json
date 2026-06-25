@@ -1,0 +1,453 @@
+{
+  "trace_version": "0.1.0",
+  "problem": {
+    "problem_id": "0070_climbing_stairs",
+    "display_title": "爬楼梯",
+    "pattern_tags": [
+      "dynamic_programming"
+    ],
+    "difficulty": "easy",
+    "entry": {
+      "class_name": "Solution",
+      "method_name": "climbStairs"
+    },
+    "input_schema": {
+      "type": "object",
+      "fields": [
+        {
+          "name": "n",
+          "type": "int"
+        }
+      ]
+    },
+    "output_schema": {
+      "type": "int",
+      "description": "爬到第 n 级的方法数"
+    },
+    "checker": {
+      "name": "exact",
+      "description": "结果是单个整数"
+    },
+    "adapter": {
+      "input": {},
+      "output": {
+        "kind": "builtin"
+      }
+    },
+    "limits": {
+      "max_events": 1000
+    },
+    "reference": {
+      "platform": "LeetCode",
+      "id": 70,
+      "title": "Climbing Stairs",
+      "usage": "compatibility reference only"
+    }
+  },
+  "run": {
+    "language": "python",
+    "entry": {
+      "class_name": "Solution",
+      "method_name": "climbStairs"
+    },
+    "input": {
+      "n": 5
+    },
+    "expected": 8,
+    "actual": 8,
+    "status": "passed",
+    "total_steps": 14,
+    "truncated": false
+  },
+  "events": [
+    {
+      "step": 1,
+      "event_type": "dp_init",
+      "message": "创建 DP 表格：dp[0] 到 dp[5]，共 6 格。dp[0]=1（地面，0 级台阶有 1 种走法：不走），dp[1]=1（走 1 步到第 1 级）。",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "dp:table"
+        ],
+        "indices": {
+          "dp:table": [
+            0,
+            1
+          ]
+        }
+      },
+      "before": {
+        "n": 5,
+        "dp[0]": 1,
+        "dp[1]": 1
+      },
+      "after": null,
+      "pedagogy": {
+        "mental_model": "把 DP 表格想象成一排格子，每个格子里写着'走到这一级台阶有几种方法'。",
+        "why_now": "基础情况直接写好：0 级有 1 种方法（不动），1 级有 1 种方法（走 1 步）。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 2,
+      "event_type": "dp_read",
+      "message": "读取 dp[0]=1（2 步前）和 dp[1]=1（1 步前）",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "dp:table"
+        ],
+        "indices": {
+          "dp:table": [
+            0,
+            1
+          ]
+        }
+      },
+      "before": {
+        "i": 2,
+        "dp[i-2]": 1,
+        "dp[i-1]": 1
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "你要走到第 i 级，要么从 i-1 走 1 步上来，要么从 i-2 走 2 步上来。所以需要这两格的数据。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 3,
+      "event_type": "transition_considered",
+      "message": "计算 dp[2] = dp[1] + dp[0] = 1 + 1 = 2",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "dp:table"
+        ],
+        "indices": {
+          "dp:table": [
+            0,
+            1,
+            2
+          ]
+        }
+      },
+      "before": {
+        "dp[i-2]": 1,
+        "dp[i-1]": 1,
+        "dp[i]": 2
+      },
+      "after": {
+        "dp[i]": 2
+      },
+      "pedagogy": {
+        "why_now": "到第 2 级的方法 = 到第 1 级的方法（再走 1 步）+ 到第 0 级的方法（再走 2 步）。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 4,
+      "event_type": "dp_write",
+      "message": "写入 dp[2] = 2",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "dp:table"
+        ],
+        "indices": {
+          "dp:table": [
+            2
+          ]
+        }
+      },
+      "before": {
+        "dp[i]": 2
+      },
+      "after": {
+        "dp[i]": 2
+      },
+      "pedagogy": {
+        "why_now": "把计算结果记下来。后面算 dp[i+1] 和 dp[i+2] 时会用到这个值。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 5,
+      "event_type": "dp_read",
+      "message": "读取 dp[1]=1（2 步前）和 dp[2]=2（1 步前）",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "dp:table"
+        ],
+        "indices": {
+          "dp:table": [
+            1,
+            2
+          ]
+        }
+      },
+      "before": {
+        "i": 3,
+        "dp[i-2]": 1,
+        "dp[i-1]": 2
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "你要走到第 i 级，要么从 i-1 走 1 步上来，要么从 i-2 走 2 步上来。所以需要这两格的数据。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 6,
+      "event_type": "transition_considered",
+      "message": "计算 dp[3] = dp[2] + dp[1] = 2 + 1 = 3",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "dp:table"
+        ],
+        "indices": {
+          "dp:table": [
+            1,
+            2,
+            3
+          ]
+        }
+      },
+      "before": {
+        "dp[i-2]": 1,
+        "dp[i-1]": 2,
+        "dp[i]": 3
+      },
+      "after": {
+        "dp[i]": 3
+      },
+      "pedagogy": {
+        "why_now": "到第 3 级的方法 = 到第 2 级的方法（再走 1 步）+ 到第 1 级的方法（再走 2 步）。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 7,
+      "event_type": "dp_write",
+      "message": "写入 dp[3] = 3",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "dp:table"
+        ],
+        "indices": {
+          "dp:table": [
+            3
+          ]
+        }
+      },
+      "before": {
+        "dp[i]": 3
+      },
+      "after": {
+        "dp[i]": 3
+      },
+      "pedagogy": {
+        "why_now": "把计算结果记下来。后面算 dp[i+1] 和 dp[i+2] 时会用到这个值。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 8,
+      "event_type": "dp_read",
+      "message": "读取 dp[2]=2（2 步前）和 dp[3]=3（1 步前）",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "dp:table"
+        ],
+        "indices": {
+          "dp:table": [
+            2,
+            3
+          ]
+        }
+      },
+      "before": {
+        "i": 4,
+        "dp[i-2]": 2,
+        "dp[i-1]": 3
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "你要走到第 i 级，要么从 i-1 走 1 步上来，要么从 i-2 走 2 步上来。所以需要这两格的数据。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 9,
+      "event_type": "transition_considered",
+      "message": "计算 dp[4] = dp[3] + dp[2] = 3 + 2 = 5",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "dp:table"
+        ],
+        "indices": {
+          "dp:table": [
+            2,
+            3,
+            4
+          ]
+        }
+      },
+      "before": {
+        "dp[i-2]": 2,
+        "dp[i-1]": 3,
+        "dp[i]": 5
+      },
+      "after": {
+        "dp[i]": 5
+      },
+      "pedagogy": {
+        "why_now": "到第 4 级的方法 = 到第 3 级的方法（再走 1 步）+ 到第 2 级的方法（再走 2 步）。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 10,
+      "event_type": "dp_write",
+      "message": "写入 dp[4] = 5",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "dp:table"
+        ],
+        "indices": {
+          "dp:table": [
+            4
+          ]
+        }
+      },
+      "before": {
+        "dp[i]": 5
+      },
+      "after": {
+        "dp[i]": 5
+      },
+      "pedagogy": {
+        "why_now": "把计算结果记下来。后面算 dp[i+1] 和 dp[i+2] 时会用到这个值。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 11,
+      "event_type": "dp_read",
+      "message": "读取 dp[3]=3（2 步前）和 dp[4]=5（1 步前）",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "dp:table"
+        ],
+        "indices": {
+          "dp:table": [
+            3,
+            4
+          ]
+        }
+      },
+      "before": {
+        "i": 5,
+        "dp[i-2]": 3,
+        "dp[i-1]": 5
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "你要走到第 i 级，要么从 i-1 走 1 步上来，要么从 i-2 走 2 步上来。所以需要这两格的数据。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 12,
+      "event_type": "transition_considered",
+      "message": "计算 dp[5] = dp[4] + dp[3] = 5 + 3 = 8",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "dp:table"
+        ],
+        "indices": {
+          "dp:table": [
+            3,
+            4,
+            5
+          ]
+        }
+      },
+      "before": {
+        "dp[i-2]": 3,
+        "dp[i-1]": 5,
+        "dp[i]": 8
+      },
+      "after": {
+        "dp[i]": 8
+      },
+      "pedagogy": {
+        "why_now": "到第 5 级的方法 = 到第 4 级的方法（再走 1 步）+ 到第 3 级的方法（再走 2 步）。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 13,
+      "event_type": "dp_write",
+      "message": "写入 dp[5] = 8",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "dp:table"
+        ],
+        "indices": {
+          "dp:table": [
+            5
+          ]
+        }
+      },
+      "before": {
+        "dp[i]": 8
+      },
+      "after": {
+        "dp[i]": 8
+      },
+      "pedagogy": {
+        "why_now": "把计算结果记下来。后面算 dp[i+1] 和 dp[i+2] 时会用到这个值。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 14,
+      "event_type": "return",
+      "message": "DP 表格填充完毕。最终答案 dp[5] = 8",
+      "phase": "execute",
+      "highlight": null,
+      "before": null,
+      "after": {
+        "result": 8
+      },
+      "pedagogy": {
+        "mental_model": "整个表格填满后，最后一个格子就是答案。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    }
+  ]
+}

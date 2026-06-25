@@ -1,0 +1,37 @@
+{
+  "problem_id": "0070_climbing_stairs",
+  "display_title": "爬楼梯",
+  "pattern_tags": ["dynamic_programming"],
+  "difficulty": "easy",
+  "entry": {
+    "class_name": "Solution",
+    "method_name": "climbStairs"
+  },
+  "input_schema": {
+    "type": "object",
+    "fields": [
+      {"name": "n", "type": "int"}
+    ]
+  },
+  "output_schema": {
+    "type": "int",
+    "description": "爬到第 n 级的方法数"
+  },
+  "checker": {
+    "name": "exact",
+    "description": "结果是单个整数"
+  },
+  "adapter": {
+    "input": {},
+    "output": {"kind": "builtin"}
+  },
+  "limits": {
+    "max_events": 1000
+  },
+  "reference": {
+    "platform": "LeetCode",
+    "id": 70,
+    "title": "Climbing Stairs",
+    "usage": "compatibility reference only"
+  }
+}

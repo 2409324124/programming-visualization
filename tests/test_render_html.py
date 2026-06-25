@@ -134,5 +134,81 @@ class TestRenderHtmlCli(unittest.TestCase):
             self.assertIn("array_read", content)
 
 
+DP_TRACE = {
+    "trace_version": "0.1.0",
+    "problem": {
+        "problem_id": "0070_test",
+        "display_title": "Test DP",
+        "pattern_tags": ["dynamic_programming"],
+        "difficulty": "easy",
+    },
+    "run": {
+        "language": "python",
+        "entry": {"class_name": "S", "method_name": "m"},
+        "input": {"n": 5},
+        "expected": 8,
+        "actual": 8,
+        "status": "passed",
+        "total_steps": 6,
+        "truncated": False,
+    },
+    "events": [
+        {
+            "step": 1,
+            "event_type": "dp_init",
+            "message": "创建 DP 表格",
+            "before": {"n": 5, "dp[0]": 1, "dp[1]": 1},
+            "highlight": {"objects": ["dp:table"], "indices": {"dp:table": [0, 1]}},
+        },
+        {
+            "step": 2,
+            "event_type": "dp_read",
+            "message": "读取 dp[0] 和 dp[1]",
+            "highlight": {"objects": ["dp:table"], "indices": {"dp:table": [0, 1]}},
+        },
+        {
+            "step": 3,
+            "event_type": "transition_considered",
+            "message": "计算 dp[2] = 1 + 1 = 2",
+            "highlight": {"objects": ["dp:table"], "indices": {"dp:table": [0, 1, 2]}},
+        },
+        {
+            "step": 4,
+            "event_type": "dp_write",
+            "message": "写入 dp[2] = 2",
+            "highlight": {"objects": ["dp:table"], "indices": {"dp:table": [2]}},
+        },
+        {
+            "step": 5,
+            "event_type": "return",
+            "message": "返回 8",
+            "after": {"result": 8},
+        },
+    ],
+}
+
+
+class TestRenderHtmlDP(unittest.TestCase):
+    def test_dp_table_contains_cells(self):
+        html_out = render_trace_to_html(DP_TRACE)
+        self.assertIn("dp-table", html_out)
+        self.assertIn("dp-cell", html_out)
+        self.assertIn("data-dp-idx", html_out)
+
+    def test_dp_table_has_correct_count(self):
+        html_out = render_trace_to_html(DP_TRACE)
+        self.assertGreaterEqual(html_out.count("data-dp-idx="), 6)
+
+    def test_dp_highlight_script(self):
+        html_out = render_trace_to_html(DP_TRACE)
+        self.assertIn("dp:table", html_out)
+        self.assertIn("hl-read", html_out)
+        self.assertIn("hl-write", html_out)
+
+    def test_dp_table_with_base_cases(self):
+        html_out = render_trace_to_html(DP_TRACE)
+        self.assertIn("filled", html_out, "Base cases should be pre-filled")
+
+
 if __name__ == "__main__":
     unittest.main()
