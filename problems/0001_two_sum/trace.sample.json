@@ -109,7 +109,7 @@
         "why_now": "遍历数组，一次只看一个元素。"
       },
       "line": null,
-      "timestamp_ms": 1782384481783
+      "timestamp_ms": 0
     },
     {
       "step": 2,
@@ -130,7 +130,7 @@
         "why_now": "查哈希表 O(1)，看补数是否存在。"
       },
       "line": null,
-      "timestamp_ms": 1782384481783
+      "timestamp_ms": 0
     },
     {
       "step": 3,
@@ -156,7 +156,7 @@
         "why_now": "当前没找到答案，先记录以便后续查找。"
       },
       "line": null,
-      "timestamp_ms": 1782384481783
+      "timestamp_ms": 0
     },
     {
       "step": 4,
@@ -185,7 +185,7 @@
         "why_now": "遍历数组，一次只看一个元素。"
       },
       "line": null,
-      "timestamp_ms": 1782384481783
+      "timestamp_ms": 0
     },
     {
       "step": 5,
@@ -208,7 +208,7 @@
         "why_now": "查哈希表 O(1)，看补数是否存在。"
       },
       "line": null,
-      "timestamp_ms": 1782384481783
+      "timestamp_ms": 0
     },
     {
       "step": 6,
@@ -232,7 +232,7 @@
         "mental_model": "哈希表像一本快速查找的字典，key 是见过的值，value 是它的位置。"
       },
       "line": null,
-      "timestamp_ms": 1782384481783
+      "timestamp_ms": 0
     }
   ]
 }

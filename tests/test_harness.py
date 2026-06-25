@@ -171,7 +171,8 @@ class Solution:
         case = {"name": "c", "args": {"x": 1}, "expected": 1}
         result = run_case(meta, case, sol_path, save_trace=False)
         self.assertFalse(result["passed"])
-        self.assertIn("ClassNotFoundError", result["message"])
+        self.assertIn("找不到指定的类", result["message"])
+        self.assertIn("ClassNotFoundError", result["error"])
 
     def test_method_not_found(self):
         self._write_file("problem.json", {
@@ -184,7 +185,8 @@ class Solution:
         case = {"name": "c", "args": {"x": 1}, "expected": 1}
         result = run_case(meta, case, sol_path, save_trace=False)
         self.assertFalse(result["passed"])
-        self.assertIn("MethodNotFoundError", result["message"])
+        self.assertIn("找不到指定的方法", result["message"])
+        self.assertIn("MethodNotFoundError", result["error"])
 
     def test_state_no_leak(self):
         """Each case creates a fresh module and instance, no state leakage."""

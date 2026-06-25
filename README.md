@@ -13,6 +13,34 @@
 - DP 表格如何一步步更新；
 - 图和网格搜索如何标记 visited。
 
+## Quickstart
+
+**依赖：** Python 3.10+。推荐使用 [uv](https://docs.astral.sh/uv/) 管理环境（零运行时依赖）。
+
+```bash
+# 1. 克隆并进入项目
+git clone git@github.com:2409324124/programming-visualization.git
+cd programming-visualization
+
+# 2. 创建虚拟环境并安装项目（可编辑模式）
+uv venv
+uv pip install -e .
+
+# 3. 运行测试
+uv run python -m unittest discover -s tests -v
+
+# 4. 运行第一个题目
+uv run python -m pv run problems/0001_two_sum --all
+
+# 5. 使用可视化版本并保存 trace
+uv run python -m pv run problems/0001_two_sum --solution visual_solution.py --save-trace --all
+
+# 6. 渲染保存的 trace 为文本
+uv run python -m pv render-text problems/0001_two_sum/trace.sample.json
+```
+
+> 如果不使用 uv，可以用标准 venv：`python3 -m venv .venv && source .venv/bin/activate && pip install -e .`，之后不需要 `uv run` 前缀。
+
 ## Core Idea
 
 ```text
@@ -42,6 +70,7 @@ text / HTML / SVG / React visualization
 ## Docs
 
 - [Product Plan](docs/product-plan.md)
+- [Harness Plan](docs/harness-plan.md)
 - [Trace Schema](docs/trace-schema.md)
 - [MVP Problems](docs/mvp-problems.md)
 - [Existing Projects Survey](docs/existing-projects-survey.md)
@@ -71,9 +100,14 @@ Expected future structure:
 programming-visualization/
 ├── AGENTS.md
 ├── README.md
+├── pyproject.toml
+├── uv.lock
 ├── docs/
+│   ├── harness-plan.md
+│   └── ...
 ├── problems/
 │   └── 0001_two_sum/
+│       ├── problem.json
 │       ├── solution.py
 │       ├── visual_solution.py
 │       ├── cases.json
@@ -83,9 +117,12 @@ programming-visualization/
 │   └── pv/
 │       ├── harness.py
 │       ├── trace_schema.py
+│       ├── checkers.py
+│       ├── adapters.py
+│       ├── structures.py
+│       ├── errors.py
 │       ├── render_text.py
-│       └── render_html.py
-├── examples/
+│       └── cli.py
 └── tests/
 ```
 

@@ -167,7 +167,7 @@ problems/0001_two_sum/
 | 字段 | 必须 | 类型 | 说明 |
 |------|------|------|------|
 | `problem_id` | 是 | string | 唯一标识，与目录名一致 |
-| `display_title` | 是 | string | 人类可读标题 |
+| `display_title` | 推荐 | string | 人类可读标题（缺失时 fallback 到 problem_id） |
 | `pattern_tags` | 是 | string[] | 从 AGENTS.md 的 pattern buckets 选取 |
 | `difficulty` | 是 | enum | `"easy"` / `"medium"` / `"hard"` |
 | `entry.class_name` | 是 | string | Python class 名称，如 `"Solution"` |

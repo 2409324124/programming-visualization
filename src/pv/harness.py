@@ -14,6 +14,7 @@ from pv.errors import (
     MethodNotFoundError,
     ProblemLoadError,
     ProblemMetaInvalid,
+    PVError,
     SolutionImportError,
 )
 from pv.trace_schema import TraceBuilder
@@ -206,6 +207,29 @@ def run_case(
             "actual": normalized,
             "message": check_result.message,
             "error": None,
+            "trace_path": trace_path,
+            "step_count": trace.step_count if trace else 0,
+            "truncated": trace._truncated if trace else False,
+        }
+
+    except PVError as exc:
+        # Harness-level user-facing error — use the friendly user_message
+        if trace is not None:
+            trace.finish("error", None)
+            trace_dir = trace_output_dir or "."
+            trace_path = os.path.join(trace_dir, f"trace.case{case_index}.json")
+            with open(trace_path, "w", encoding="utf-8") as f:
+                f.write(trace.to_json())
+        else:
+            trace_path = None
+
+        return {
+            "case_name": case_name,
+            "passed": False,
+            "expected": expected,
+            "actual": None,
+            "message": exc.user_message,
+            "error": f"{type(exc).__name__}: {exc}",
             "trace_path": trace_path,
             "step_count": trace.step_count if trace else 0,
             "truncated": trace._truncated if trace else False,
