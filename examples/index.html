@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Programming Visualization — Demo Gallery</title>
+<style>
+  body { font-family: system-ui, -apple-system, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; color: #1a1a1a; background: #fafafa; }
+  h1 { margin-bottom: .2rem; }
+  .subtitle { color: #666; margin-bottom: 2rem; }
+  .demo { background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 1rem 1.2rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem; }
+  .demo:hover { border-color: #90caf9; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
+  .demo-tag { font-size: .75rem; padding: 2px 8px; border-radius: 4px; font-weight: 600; white-space: nowrap; }
+  .tag-array { background: #e3f2fd; color: #1565c0; }
+  .tag-twoptr { background: #f3e5f5; color: #7b1fa2; }
+  .tag-linkedlist { background: #e8f5e9; color: #2e7d32; }
+  .tag-dp { background: #fff3e0; color: #e65100; }
+  .demo-info { flex: 1; }
+  .demo-info h3 { margin: 0 0 .2rem; }
+  .demo-info p { margin: 0; color: #666; font-size: .9rem; }
+  .demo-link { color: #1565c0; text-decoration: none; font-weight: 600; white-space: nowrap; }
+  .demo-link:hover { text-decoration: underline; }
+  footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #e0e0e0; color: #999; font-size: .85rem; }
+  footer a { color: #666; }
+</style>
+</head>
+<body>
+
+<h1>Programming Visualization</h1>
+<p class="subtitle">算法执行过程可视化 Demo — 面向非科班 / 自学开发者的 LeetCode-style 学习器。</p>
+
+<div class="demo">
+  <span class="demo-tag tag-array">array + hash map</span>
+  <div class="demo-info">
+    <h3>Two Sum · 两数之和</h3>
+    <p>哈希表补数查找：数组读取、哈希表更新、答案定位。</p>
+  </div>
+  <a class="demo-link" href="0001_two_sum.case0.html">查看 →</a>
+</div>
+
+<div class="demo">
+  <span class="demo-tag tag-twoptr">two pointers</span>
+  <div class="demo-info">
+    <h3>Container With Most Water · 盛最多水的容器</h3>
+    <p>双指针向内扫描：面积计算、短板比较、最大值更新。</p>
+  </div>
+  <a class="demo-link" href="0011_container_with_most_water.case0.html">查看 →</a>
+</div>
+
+<div class="demo">
+  <span class="demo-tag tag-linkedlist">linked list</span>
+  <div class="demo-info">
+    <h3>Reverse Linked List · 反转链表</h3>
+    <p>链表箭头逐个反转：保存 next、断开连接、指向 prev、指针前移。</p>
+  </div>
+  <a class="demo-link" href="0206_reverse_linked_list.case0.html">查看 →</a>
+</div>
+
+<div class="demo">
+  <span class="demo-tag tag-dp">DP table</span>
+  <div class="demo-info">
+    <h3>Climbing Stairs · 爬楼梯</h3>
+    <p>DP 表格填充：读取前两格、递推计算、写入当前格。</p>
+  </div>
+  <a class="demo-link" href="0070_climbing_stairs.case0.html">查看 →</a>
+</div>
+
+<footer>
+  <p>开源项目 · <a href="https://github.com/2409324124/programming-visualization">GitHub</a></p>
+  <p>本项目不隶属于 LeetCode，不复制官方题面或隐藏测试。所有内容均为原创教育素材。</p>
+</footer>
+
+</body>
+</html>
