@@ -33,6 +33,15 @@ footer{margin-top:2rem;padding:1rem;border-top:2px solid #e0e0e0;text-align:cent
 footer .status{font-size:1.1rem;font-weight:700}
 footer .status.passed{color:#2e7d32}
 footer .status.failed{color:#c62828}
+.ll-diagram{display:flex;align-items:center;gap:0;margin:1rem 0;overflow-x:auto;padding:.5rem 0}
+.ll-node{width:48px;height:48px;display:flex;align-items:center;justify-content:center;border:2px solid #90caf9;border-radius:8px;background:#e3f2fd;font-weight:700;font-size:.9rem;position:relative;flex-shrink:0}
+.ll-node.hl{background:#ffd54f;border-color:#ff9800;box-shadow:0 0 0 3px #ff9800}
+.ll-arrow{width:32px;height:2px;background:#bbb;position:relative;flex-shrink:0}
+.ll-arrow::after{content:'';position:absolute;right:-4px;top:-5px;border:6px solid transparent;border-left:8px solid #bbb}
+.ll-arrow.hl{background:#ff9800}
+.ll-arrow.hl::after{border-left-color:#ff9800}
+.ll-label{position:absolute;top:-22px;font-size:.7rem;color:#888;white-space:nowrap;left:50%;transform:translateX(-50%)}
+.ll-null{width:48px;height:48px;display:flex;align-items:center;justify-content:center;border:2px dashed #ccc;border-radius:8px;color:#999;font-size:.8rem;flex-shrink:0}
 """
 
 TEMPLATE = """\
@@ -74,18 +83,37 @@ def _render_header(problem: dict) -> str:
 </header>"""
 
 
-def _render_input_panel(run: dict) -> str:
+def _render_linked_list_input(key: str, vals: list) -> str:
+    """Render a linked list as a horizontal node-edge diagram."""
+    parts: list[str] = [f'<div><strong>{_esc(key)}:</strong></div>']
+    parts.append('<div class="ll-diagram">')
+    for i, v in enumerate(vals):
+        if i > 0:
+            parts.append('<div class="ll-arrow"></div>')
+        parts.append(f'<div class="ll-node" data-ll-idx="{i}">{_esc(v)}</div>')
+    # null sentinel
+    parts.append('<div class="ll-arrow"></div>')
+    parts.append('<div class="ll-null">None</div>')
+    parts.append('</div>')
+    return "\n".join(parts)
+
+
+def _render_input_panel(run: dict, problem: dict | None = None) -> str:
     inp = run.get("input", {})
     if not inp:
         return ""
+    is_linked_list = problem is not None and "linked_list" in problem.get("pattern_tags", [])
     parts: list[str] = ['<section class="input-panel"><h2>输入</h2>']
     for key, val in inp.items():
         if isinstance(val, list) and val and all(isinstance(x, (int, float)) for x in val):
-            parts.append(f'<div><strong>{_esc(key)}:</strong></div>')
-            parts.append('<div class="array-row">')
-            for i, v in enumerate(val):
-                parts.append(f'<div class="array-cell" data-idx="{i}">{_esc(v)}</div>')
-            parts.append('</div>')
+            if is_linked_list:
+                parts.append(_render_linked_list_input(key, val))
+            else:
+                parts.append(f'<div><strong>{_esc(key)}:</strong></div>')
+                parts.append('<div class="array-row">')
+                for i, v in enumerate(val):
+                    parts.append(f'<div class="array-cell" data-idx="{i}">{_esc(v)}</div>')
+                parts.append('</div>')
         else:
             parts.append(f'<div><strong>{_esc(key)}:</strong> {_format_val(val)}</div>')
     parts.append('</section>')
@@ -152,41 +180,60 @@ def _render_footer(run: dict) -> str:
 def _apply_highlights(html_str: str, events: list[dict]) -> str:
     """Post-process the HTML to add highlight classes using a <script> block.
 
-    The script runs on page load and highlights array cells for the currently
-    hovered step based on highlight.indices data embedded in data attributes.
+    The script runs on page load and highlights array cells and linked-list
+    nodes for the currently hovered step based on highlight.indices data
+    embedded in data attributes.
+
+    Supported index prefixes:
+    - ``arr:`` → highlights ``.array-cell[data-idx="N"]``
+    - ``ll:``  → highlights ``.ll-node[data-ll-idx="N"]``
     """
     if not events:
         return html_str
-    # Embed highlight data as JSON for the JS to consume
-    hl_map: dict[int, list[int]] = {}
+    # Collect per-step highlight indices, keyed by target type
+    arr_hl: dict[int, list[int]] = {}
+    ll_hl: dict[int, list[int]] = {}
     for ev in events:
         step = ev.get("step")
         hl = ev.get("highlight")
         if step and hl and isinstance(hl, dict):
             indices = hl.get("indices", {})
             for obj_key, idx_list in indices.items():
-                if obj_key.startswith("arr:") and isinstance(idx_list, list):
-                    hl_map.setdefault(step, []).extend(idx_list)
-    if not hl_map:
+                if not isinstance(idx_list, list):
+                    continue
+                if obj_key.startswith("arr:"):
+                    arr_hl.setdefault(step, []).extend(idx_list)
+                elif obj_key.startswith("ll:"):
+                    ll_hl.setdefault(step, []).extend(idx_list)
+    if not arr_hl and not ll_hl:
         return html_str
-    hl_json = json.dumps(hl_map, ensure_ascii=False)
+    arr_json = json.dumps(arr_hl, ensure_ascii=False)
+    ll_json = json.dumps(ll_hl, ensure_ascii=False)
     script = f"""\
 <script>
 (function(){{
-  var hl={hl_json};
+  var arrHl={arr_json};
+  var llHl={ll_json};
   var steps=document.querySelectorAll('.step');
   var cells=document.querySelectorAll('.array-cell');
+  var nodes=document.querySelectorAll('.ll-node');
   function clear(){{
     for(var i=0;i<cells.length;i++)cells[i].classList.remove('hl');
+    for(var i=0;i<nodes.length;i++)nodes[i].classList.remove('hl');
   }}
   for(var i=0;i<steps.length;i++){{
     steps[i].addEventListener('mouseenter',function(){{
       clear();
       var s=parseInt(this.getAttribute('data-step'));
-      var idxs=hl[s];
-      if(idxs)for(var j=0;j<idxs.length;j++){{
-        var c=document.querySelector('.array-cell[data-idx="'+idxs[j]+'"]');
+      var aIdxs=arrHl[s];
+      if(aIdxs)for(var j=0;j<aIdxs.length;j++){{
+        var c=document.querySelector('.array-cell[data-idx="'+aIdxs[j]+'"]');
         if(c)c.classList.add('hl');
+      }}
+      var lIdxs=llHl[s];
+      if(lIdxs)for(var j=0;j<lIdxs.length;j++){{
+        var n=document.querySelector('.ll-node[data-ll-idx="'+lIdxs[j]+'"]');
+        if(n)n.classList.add('hl');
       }}
     }});
     steps[i].addEventListener('mouseleave',clear);
@@ -216,7 +263,7 @@ def render_trace_to_html(trace_dict: dict) -> str:
     title = _esc(problem.get("display_title", "Program Trace"))
     body_parts: list[str] = [
         _render_header(problem),
-        _render_input_panel(run),
+        _render_input_panel(run, problem),
         '<section class="timeline"><h2>执行过程</h2>',
     ]
     if not events:

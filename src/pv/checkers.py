@@ -75,9 +75,32 @@ def _check_unordered_pairs(actual: Any, expected: Any) -> CheckResult:
     )
 
 
+def _check_linked_list_equal(actual: Any, expected: Any) -> CheckResult:
+    """Compare two linked lists by their value sequences.
+
+    Both *actual* and *expected* are already normalised to plain lists by the
+    adapter before reaching the checker, so this is a list-vs-list comparison
+    with a friendly message.
+    """
+    passed = actual == expected
+    if passed:
+        message = "链表逐节点值完全一致。"
+    else:
+        message = f"链表不匹配。预期 {expected}，实际得到 {actual}。"
+    return CheckResult(
+        passed=passed,
+        expected=expected,
+        actual=actual,
+        normalized_expected=expected,
+        normalized_actual=actual,
+        message=message,
+    )
+
+
 _CHECKERS: dict[str, Any] = {
     "exact": _check_exact,
     "unordered_pairs": _check_unordered_pairs,
+    "linked_list_equal": _check_linked_list_equal,
 }
 
 

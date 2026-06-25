@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>反转链表</title>
+<style>
+body{font-family:system-ui,-apple-system,sans-serif;max-width:900px;margin:2rem auto;padding:0 1rem;color:#1a1a1a;background:#fafafa}
+header{margin-bottom:2rem;padding-bottom:1rem;border-bottom:2px solid #e0e0e0}
+header h1{margin:0 0 .3rem;font-size:1.5rem}
+header .meta{color:#666;font-size:.9rem}
+h2{margin:1.5rem 0 .5rem;font-size:1.1rem;color:#444}
+.input-panel{margin-bottom:1.5rem}
+.array-row{display:flex;gap:4px;flex-wrap:wrap;margin:.5rem 0}
+.array-cell{width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:6px;font-weight:600;font-size:.9rem;background:#e8e8e8;color:#333;transition:background .2s}
+.array-cell.hl{background:#ffd54f;color:#333;box-shadow:0 0 0 2px #ff9800}
+.step{border-left:3px solid #e0e0e0;padding:.6rem 1rem;margin:.8rem 0;background:#fff;border-radius:0 6px 6px 0;transition:border-color .2s}
+.step:hover{border-color:#90caf9}
+.step-header{font-weight:600;color:#1565c0;margin-bottom:.2rem}
+.step-message{margin-bottom:.4rem}
+.state-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin:.4rem 0}
+.state-col{background:#f5f5f5;padding:.4rem .6rem;border-radius:4px;font-size:.85rem}
+.state-col h4{margin:0 0 .2rem;font-size:.8rem;color:#888;text-transform:uppercase}
+.state-kv{display:flex;gap:.3rem;flex-wrap:wrap}
+.state-kv span{background:#fff;padding:1px 6px;border-radius:3px;border:1px solid #e0e0e0}
+.pedagogy{margin:.3rem 0;padding:.3rem .6rem;border-radius:4px;font-size:.85rem}
+.pedagogy.why{background:#e3f2fd;color:#0d47a1}
+.pedagogy.model{background:#e8f5e9;color:#1b5e20}
+.highlight-tag{display:inline-block;background:#fff3e0;color:#e65100;padding:1px 6px;border-radius:3px;font-size:.8rem;margin-right:4px}
+footer{margin-top:2rem;padding:1rem;border-top:2px solid #e0e0e0;text-align:center}
+footer .status{font-size:1.1rem;font-weight:700}
+footer .status.passed{color:#2e7d32}
+footer .status.failed{color:#c62828}
+.ll-diagram{display:flex;align-items:center;gap:0;margin:1rem 0;overflow-x:auto;padding:.5rem 0}
+.ll-node{width:48px;height:48px;display:flex;align-items:center;justify-content:center;border:2px solid #90caf9;border-radius:8px;background:#e3f2fd;font-weight:700;font-size:.9rem;position:relative;flex-shrink:0}
+.ll-node.hl{background:#ffd54f;border-color:#ff9800;box-shadow:0 0 0 3px #ff9800}
+.ll-arrow{width:32px;height:2px;background:#bbb;position:relative;flex-shrink:0}
+.ll-arrow::after{content:'';position:absolute;right:-4px;top:-5px;border:6px solid transparent;border-left:8px solid #bbb}
+.ll-arrow.hl{background:#ff9800}
+.ll-arrow.hl::after{border-left-color:#ff9800}
+.ll-label{position:absolute;top:-22px;font-size:.7rem;color:#888;white-space:nowrap;left:50%;transform:translateX(-50%)}
+.ll-null{width:48px;height:48px;display:flex;align-items:center;justify-content:center;border:2px dashed #ccc;border-radius:8px;color:#999;font-size:.8rem;flex-shrink:0}
+
+</style>
+</head>
+<body>
+<header>
+  <h1>反转链表 <small>(0206_reverse_linked_list)</small></h1>
+  <div class="meta">标签: linked_list &middot; 难度: EASY</div>
+</header>
+<section class="input-panel"><h2>输入</h2>
+<div><strong>head:</strong></div>
+<div class="ll-diagram">
+<div class="ll-node" data-ll-idx="0">1</div>
+<div class="ll-arrow"></div>
+<div class="ll-node" data-ll-idx="1">2</div>
+<div class="ll-arrow"></div>
+<div class="ll-node" data-ll-idx="2">3</div>
+<div class="ll-arrow"></div>
+<div class="ll-node" data-ll-idx="3">4</div>
+<div class="ll-arrow"></div>
+<div class="ll-node" data-ll-idx="4">5</div>
+<div class="ll-arrow"></div>
+<div class="ll-null">None</div>
+</div>
+</section>
+<section class="timeline"><h2>执行过程</h2>
+<div class="step" data-step="1">
+  <div class="step-header">Step 1 &middot; pointer_init</div>
+  <div class="step-message">初始化：prev=None（前一个节点），curr=原来的头节点</div>
+  <div class="state-grid">
+    <div class="state-col"><h4>before</h4><div class="state-kv">
+<span>prev=None</span>
+<span>curr=&#x27;head&#x27;</span>
+    </div></div>
+    <div class="state-col"><h4>after</h4><div class="state-kv">
+    </div></div>
+  </div>
+  <div><span class="highlight-tag">高亮: {&quot;objects&quot;: [&quot;ptr:prev&quot;, &quot;ptr:curr&quot;]}</span></div>
+  <div class="pedagogy why">💡 从链表头部开始，一个一个反转箭头方向。</div>
+  <div class="pedagogy model">🧠 反转链表就像把一排箭头全部反过来。prev 指向已经反转好的部分，curr 指向正在处理的节点。</div>
+</div>
+<div class="step" data-step="2">
+  <div class="step-header">Step 2 &middot; save_next</div>
+  <div class="step-message">保存 curr.next 到 next_temp（curr.val=1，next_temp=2）</div>
+  <div class="state-grid">
+    <div class="state-col"><h4>before</h4><div class="state-kv">
+<span>curr.val=1</span>
+<span>curr.next=2</span>
+<span>next_temp=2</span>
+    </div></div>
+    <div class="state-col"><h4>after</h4><div class="state-kv">
+    </div></div>
+  </div>
+  <div><span class="highlight-tag">高亮: {&quot;objects&quot;: [&quot;ptr:curr&quot;, &quot;ptr:next_temp&quot;]}</span></div>
+  <div class="pedagogy why">💡 必须先把 curr.next 存下来，因为下一步要断开这个箭头。不保存的话，后面的链表就丢了。</div>
+</div>
+<div class="step" data-step="3">
+  <div class="step-header">Step 3 &middot; link_set</div>
+  <div class="step-message">反转箭头：curr.next 现在指向 prev（curr.val=1 → prev=None）</div>
+  <div class="state-grid">
+    <div class="state-col"><h4>before</h4><div class="state-kv">
+<span>curr.val=1</span>
+<span>prev=None</span>
+    </div></div>
+    <div class="state-col"><h4>after</h4><div class="state-kv">
+<span>curr.next=None</span>
+    </div></div>
+  </div>
+  <div><span class="highlight-tag">高亮: {&quot;objects&quot;: [&quot;ptr:curr&quot;, &quot;ptr:prev&quot;], &quot;edge&quot;: &quot;curr-&gt;prev&quot;}</span></div>
+  <div class="pedagogy why">💡 核心动作：把当前节点的 next 指针掉头，从指向下一个变成指向前一个。这就是&#x27;反转&#x27;。</div>
+</div>
+<div class="step" data-step="4">
+  <div class="step-header">Step 4 &middot; cursor_move</div>
+  <div class="step-message">移动指针：prev 前进到 curr，curr 前进到 next_temp（prev.val=1）</div>
+  <div class="state-grid">
+    <div class="state-col"><h4>before</h4><div class="state-kv">
+<span>prev=1</span>
+<span>curr=2</span>
+    </div></div>
+    <div class="state-col"><h4>after</h4><div class="state-kv">
+<span>prev=1</span>
+<span>curr=2</span>
+    </div></div>
+  </div>
+  <div><span class="highlight-tag">高亮: {&quot;objects&quot;: [&quot;ptr:prev&quot;, &quot;ptr:curr&quot;]}</span></div>
+  <div class="pedagogy why">💡 处理完当前节点后，prev 和 curr 都向前移动一步，准备处理下一个节点。</div>
+</div>
+<div class="step" data-step="5">
+  <div class="step-header">Step 5 &middot; save_next</div>
+  <div class="step-message">保存 curr.next 到 next_temp（curr.val=2，next_temp=3）</div>
+  <div class="state-grid">
+    <div class="state-col"><h4>before</h4><div class="state-kv">
+<span>curr.val=2</span>
+<span>curr.next=3</span>
+<span>next_temp=3</span>
+    </div></div>
+    <div class="state-col"><h4>after</h4><div class="state-kv">
+    </div></div>
+  </div>
+  <div><span class="highlight-tag">高亮: {&quot;objects&quot;: [&quot;ptr:curr&quot;, &quot;ptr:next_temp&quot;]}</span></div>
+  <div class="pedagogy why">💡 必须先把 curr.next 存下来，因为下一步要断开这个箭头。不保存的话，后面的链表就丢了。</div>
+</div>
+<div class="step" data-step="6">
+  <div class="step-header">Step 6 &middot; link_set</div>
+  <div class="step-message">反转箭头：curr.next 现在指向 prev（curr.val=2 → prev=1）</div>
+  <div class="state-grid">
+    <div class="state-col"><h4>before</h4><div class="state-kv">
+<span>curr.val=2</span>
+<span>prev=1</span>
+    </div></div>
+    <div class="state-col"><h4>after</h4><div class="state-kv">
+<span>curr.next=1</span>
+    </div></div>
+  </div>
+  <div><span class="highlight-tag">高亮: {&quot;objects&quot;: [&quot;ptr:curr&quot;, &quot;ptr:prev&quot;], &quot;edge&quot;: &quot;curr-&gt;prev&quot;}</span></div>
+  <div class="pedagogy why">💡 核心动作：把当前节点的 next 指针掉头，从指向下一个变成指向前一个。这就是&#x27;反转&#x27;。</div>
+</div>
+<div class="step" data-step="7">
+  <div class="step-header">Step 7 &middot; cursor_move</div>
+  <div class="step-message">移动指针：prev 前进到 curr，curr 前进到 next_temp（prev.val=2）</div>
+  <div class="state-grid">
+    <div class="state-col"><h4>before</h4><div class="state-kv">
+<span>prev=2</span>
+<span>curr=3</span>
+    </div></div>
+    <div class="state-col"><h4>after</h4><div class="state-kv">
+<span>prev=2</span>
+<span>curr=3</span>
+    </div></div>
+  </div>
+  <div><span class="highlight-tag">高亮: {&quot;objects&quot;: [&quot;ptr:prev&quot;, &quot;ptr:curr&quot;]}</span></div>
+  <div class="pedagogy why">💡 处理完当前节点后，prev 和 curr 都向前移动一步，准备处理下一个节点。</div>
+</div>
+<div class="step" data-step="8">
+  <div class="step-header">Step 8 &middot; save_next</div>
+  <div class="step-message">保存 curr.next 到 next_temp（curr.val=3，next_temp=4）</div>
+  <div class="state-grid">
+    <div class="state-col"><h4>before</h4><div class="state-kv">
+<span>curr.val=3</span>
+<span>curr.next=4</span>
+<span>next_temp=4</span>
+    </div></div>
+    <div class="state-col"><h4>after</h4><div class="state-kv">
+    </div></div>
+  </div>
+  <div><span class="highlight-tag">高亮: {&quot;objects&quot;: [&quot;ptr:curr&quot;, &quot;ptr:next_temp&quot;]}</span></div>
+  <div class="pedagogy why">💡 必须先把 curr.next 存下来，因为下一步要断开这个箭头。不保存的话，后面的链表就丢了。</div>
+</div>
+<div class="step" data-step="9">
+  <div class="step-header">Step 9 &middot; link_set</div>
+  <div class="step-message">反转箭头：curr.next 现在指向 prev（curr.val=3 → prev=2）</div>
+  <div class="state-grid">
+    <div class="state-col"><h4>before</h4><div class="state-kv">
+<span>curr.val=3</span>
+<span>prev=2</span>
+    </div></div>
+    <div class="state-col"><h4>after</h4><div class="state-kv">
+<span>curr.next=2</span>
+    </div></div>
+  </div>
+  <div><span class="highlight-tag">高亮: {&quot;objects&quot;: [&quot;ptr:curr&quot;, &quot;ptr:prev&quot;], &quot;edge&quot;: &quot;curr-&gt;prev&quot;}</span></div>
+  <div class="pedagogy why">💡 核心动作：把当前节点的 next 指针掉头，从指向下一个变成指向前一个。这就是&#x27;反转&#x27;。</div>
+</div>
+<div class="step" data-step="10">
+  <div class="step-header">Step 10 &middot; cursor_move</div>
+  <div class="step-message">移动指针：prev 前进到 curr，curr 前进到 next_temp（prev.val=3）</div>
+  <div class="state-grid">
+    <div class="state-col"><h4>before</h4><div class="state-kv">
+<span>prev=3</span>
+<span>curr=4</span>
+    </div></div>
+    <div class="state-col"><h4>after</h4><div class="state-kv">
+<span>prev=3</span>
+<span>curr=4</span>
+    </div></div>
+  </div>
+  <div><span class="highlight-tag">高亮: {&quot;objects&quot;: [&quot;ptr:prev&quot;, &quot;ptr:curr&quot;]}</span></div>
+  <div class="pedagogy why">💡 处理完当前节点后，prev 和 curr 都向前移动一步，准备处理下一个节点。</div>
+</div>
+<div class="step" data-step="11">
+  <div class="step-header">Step 11 &middot; save_next</div>
+  <div class="step-message">保存 curr.next 到 next_temp（curr.val=4，next_temp=5）</div>
+  <div class="state-grid">
+    <div class="state-col"><h4>before</h4><div class="state-kv">
+<span>curr.val=4</span>
+<span>curr.next=5</span>
+<span>next_temp=5</span>
+    </div></div>
+    <div class="state-col"><h4>after</h4><div class="state-kv">
+    </div></div>
+  </div>
+  <div><span class="highlight-tag">高亮: {&quot;objects&quot;: [&quot;ptr:curr&quot;, &quot;ptr:next_temp&quot;]}</span></div>
+  <div class="pedagogy why">💡 必须先把 curr.next 存下来，因为下一步要断开这个箭头。不保存的话，后面的链表就丢了。</div>
+</div>
+<div class="step" data-step="12">
+  <div class="step-header">Step 12 &middot; link_set</div>
+  <div class="step-message">反转箭头：curr.next 现在指向 prev（curr.val=4 → prev=3）</div>
+  <div class="state-grid">
+    <div class="state-col"><h4>before</h4><div class="state-kv">
+<span>curr.val=4</span>
+<span>prev=3</span>
+    </div></div>
+    <div class="state-col"><h4>after</h4><div class="state-kv">
+<span>curr.next=3</span>
+    </div></div>
+  </div>
+  <div><span class="highlight-tag">高亮: {&quot;objects&quot;: [&quot;ptr:curr&quot;, &quot;ptr:prev&quot;], &quot;edge&quot;: &quot;curr-&gt;prev&quot;}</span></div>
+  <div class="pedagogy why">💡 核心动作：把当前节点的 next 指针掉头，从指向下一个变成指向前一个。这就是&#x27;反转&#x27;。</div>
+</div>
+<div class="step" data-step="13">
+  <div class="step-header">Step 13 &middot; cursor_move</div>
+  <div class="step-message">移动指针：prev 前进到 curr，curr 前进到 next_temp（prev.val=4）</div>
+  <div class="state-grid">
+    <div class="state-col"><h4>before</h4><div class="state-kv">
+<span>prev=4</span>
+<span>curr=5</span>
+    </div></div>
+    <div class="state-col"><h4>after</h4><div class="state-kv">
+<span>prev=4</span>
+<span>curr=5</span>
+    </div></div>
+  </div>
+  <div><span class="highlight-tag">高亮: {&quot;objects&quot;: [&quot;ptr:prev&quot;, &quot;ptr:curr&quot;]}</span></div>
+  <div class="pedagogy why">💡 处理完当前节点后，prev 和 curr 都向前移动一步，准备处理下一个节点。</div>
+</div>
+<div class="step" data-step="14">
+  <div class="step-header">Step 14 &middot; save_next</div>
+  <div class="step-message">保存 curr.next 到 next_temp（curr.val=5，next_temp=None）</div>
+  <div class="state-grid">
+    <div class="state-col"><h4>before</h4><div class="state-kv">
+<span>curr.val=5</span>
+<span>curr.next=None</span>
+<span>next_temp=None</span>
+    </div></div>
+    <div class="state-col"><h4>after</h4><div class="state-kv">
+    </div></div>
+  </div>
+  <div><span class="highlight-tag">高亮: {&quot;objects&quot;: [&quot;ptr:curr&quot;, &quot;ptr:next_temp&quot;]}</span></div>
+  <div class="pedagogy why">💡 必须先把 curr.next 存下来，因为下一步要断开这个箭头。不保存的话，后面的链表就丢了。</div>
+</div>
+<div class="step" data-step="15">
+  <div class="step-header">Step 15 &middot; link_set</div>
+  <div class="step-message">反转箭头：curr.next 现在指向 prev（curr.val=5 → prev=4）</div>
+  <div class="state-grid">
+    <div class="state-col"><h4>before</h4><div class="state-kv">
+<span>curr.val=5</span>
+<span>prev=4</span>
+    </div></div>
+    <div class="state-col"><h4>after</h4><div class="state-kv">
+<span>curr.next=4</span>
+    </div></div>
+  </div>
+  <div><span class="highlight-tag">高亮: {&quot;objects&quot;: [&quot;ptr:curr&quot;, &quot;ptr:prev&quot;], &quot;edge&quot;: &quot;curr-&gt;prev&quot;}</span></div>
+  <div class="pedagogy why">💡 核心动作：把当前节点的 next 指针掉头，从指向下一个变成指向前一个。这就是&#x27;反转&#x27;。</div>
+</div>
+<div class="step" data-step="16">
+  <div class="step-header">Step 16 &middot; cursor_move</div>
+  <div class="step-message">移动指针：prev 前进到 curr，curr 前进到 next_temp（prev.val=5）</div>
+  <div class="state-grid">
+    <div class="state-col"><h4>before</h4><div class="state-kv">
+<span>prev=5</span>
+<span>curr=None</span>
+    </div></div>
+    <div class="state-col"><h4>after</h4><div class="state-kv">
+<span>prev=5</span>
+<span>curr=None</span>
+    </div></div>
+  </div>
+  <div><span class="highlight-tag">高亮: {&quot;objects&quot;: [&quot;ptr:prev&quot;, &quot;ptr:curr&quot;]}</span></div>
+  <div class="pedagogy why">💡 处理完当前节点后，prev 和 curr 都向前移动一步，准备处理下一个节点。</div>
+</div>
+<div class="step" data-step="17">
+  <div class="step-header">Step 17 &middot; return</div>
+  <div class="step-message">循环结束（curr=None），prev 就是新的头节点（prev.val=5）。返回 prev。</div>
+  <div class="state-grid">
+    <div class="state-col"><h4>before</h4><div class="state-kv">
+    </div></div>
+    <div class="state-col"><h4>after</h4><div class="state-kv">
+<span>result=5</span>
+    </div></div>
+  </div>
+  <div class="pedagogy model">🧠 当 curr 走到 None 时，说明原来的链表末尾已经到了。prev 此时指向的就是反转后的新头部。</div>
+</div>
+</section>
+<footer>
+  <div class="status passed">结果: 通过 ✓</div>
+  <div>实际: [5, 4, 3, 2, 1] &middot; 预期: [5, 4, 3, 2, 1]</div>
+</footer>
+</body>
+</html>

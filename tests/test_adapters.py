@@ -50,6 +50,46 @@ class TestAdapters(unittest.TestCase):
         except AdapterError as e:
             self.assertIn("不支持", e.user_message)
 
+    def test_linked_list_build(self):
+        config = {"input": {"head": {"kind": "linked_list"}}}
+        result = adapt_input({"head": [1, 2, 3]}, config)
+        from pv.structures import ListNode
+        head = result["head"]
+        self.assertIsInstance(head, ListNode)
+        self.assertEqual(head.val, 1)
+        self.assertEqual(head.next.val, 2)
+        self.assertEqual(head.next.next.val, 3)
+        self.assertIsNone(head.next.next.next)
+
+    def test_linked_list_empty(self):
+        config = {"input": {"head": {"kind": "linked_list"}}}
+        result = adapt_input({"head": []}, config)
+        self.assertIsNone(result["head"])
+
+    def test_linked_list_single(self):
+        config = {"input": {"head": {"kind": "linked_list"}}}
+        result = adapt_input({"head": [42]}, config)
+        self.assertEqual(result["head"].val, 42)
+        self.assertIsNone(result["head"].next)
+
+    def test_linked_list_roundtrip(self):
+        config = {"input": {"head": {"kind": "linked_list"}}, "output": {"kind": "linked_list"}}
+        result = adapt_input({"head": [1, 2, 3, 4, 5]}, config)
+        serialized = adapt_output(result["head"], config)
+        self.assertEqual(serialized, [1, 2, 3, 4, 5])
+
+    def test_linked_list_roundtrip_single(self):
+        config = {"input": {"head": {"kind": "linked_list"}}, "output": {"kind": "linked_list"}}
+        result = adapt_input({"head": [1]}, config)
+        serialized = adapt_output(result["head"], config)
+        self.assertEqual(serialized, [1])
+
+    def test_linked_list_roundtrip_empty(self):
+        config = {"input": {"head": {"kind": "linked_list"}}, "output": {"kind": "linked_list"}}
+        result = adapt_input({"head": []}, config)
+        serialized = adapt_output(result["head"], config)
+        self.assertEqual(serialized, [])
+
 
 if __name__ == "__main__":
     unittest.main()

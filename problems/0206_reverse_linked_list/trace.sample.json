@@ -1,0 +1,491 @@
+{
+  "trace_version": "0.1.0",
+  "problem": {
+    "problem_id": "0206_reverse_linked_list",
+    "display_title": "反转链表",
+    "pattern_tags": [
+      "linked_list"
+    ],
+    "difficulty": "easy",
+    "entry": {
+      "class_name": "Solution",
+      "method_name": "reverseList"
+    },
+    "input_schema": {
+      "type": "object",
+      "fields": [
+        {
+          "name": "head",
+          "type": "linked_list",
+          "items": "int"
+        }
+      ]
+    },
+    "output_schema": {
+      "type": "linked_list",
+      "description": "反转后的链表头节点"
+    },
+    "checker": {
+      "name": "linked_list_equal",
+      "description": "逐节点比较值"
+    },
+    "adapter": {
+      "input": {
+        "head": {
+          "kind": "linked_list"
+        }
+      },
+      "output": {
+        "kind": "linked_list"
+      }
+    },
+    "limits": {
+      "max_events": 1000
+    },
+    "reference": {
+      "platform": "LeetCode",
+      "id": 206,
+      "title": "Reverse Linked List",
+      "usage": "compatibility reference only"
+    }
+  },
+  "run": {
+    "language": "python",
+    "entry": {
+      "class_name": "Solution",
+      "method_name": "reverseList"
+    },
+    "input": {
+      "head": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    "expected": [
+      5,
+      4,
+      3,
+      2,
+      1
+    ],
+    "actual": [
+      5,
+      4,
+      3,
+      2,
+      1
+    ],
+    "status": "passed",
+    "total_steps": 17,
+    "truncated": false
+  },
+  "events": [
+    {
+      "step": 1,
+      "event_type": "pointer_init",
+      "message": "初始化：prev=None（前一个节点），curr=原来的头节点",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:prev",
+          "ptr:curr"
+        ]
+      },
+      "before": {
+        "prev": null,
+        "curr": "head"
+      },
+      "after": null,
+      "pedagogy": {
+        "mental_model": "反转链表就像把一排箭头全部反过来。prev 指向已经反转好的部分，curr 指向正在处理的节点。",
+        "why_now": "从链表头部开始，一个一个反转箭头方向。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 2,
+      "event_type": "save_next",
+      "message": "保存 curr.next 到 next_temp（curr.val=1，next_temp=2）",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:curr",
+          "ptr:next_temp"
+        ]
+      },
+      "before": {
+        "curr.val": 1,
+        "curr.next": 2,
+        "next_temp": 2
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "必须先把 curr.next 存下来，因为下一步要断开这个箭头。不保存的话，后面的链表就丢了。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 3,
+      "event_type": "link_set",
+      "message": "反转箭头：curr.next 现在指向 prev（curr.val=1 → prev=None）",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:curr",
+          "ptr:prev"
+        ],
+        "edge": "curr->prev"
+      },
+      "before": {
+        "curr.val": 1,
+        "prev": null
+      },
+      "after": {
+        "curr.next": null
+      },
+      "pedagogy": {
+        "why_now": "核心动作：把当前节点的 next 指针掉头，从指向下一个变成指向前一个。这就是'反转'。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 4,
+      "event_type": "cursor_move",
+      "message": "移动指针：prev 前进到 curr，curr 前进到 next_temp（prev.val=1）",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:prev",
+          "ptr:curr"
+        ]
+      },
+      "before": {
+        "prev": 1,
+        "curr": 2
+      },
+      "after": {
+        "prev": 1,
+        "curr": 2
+      },
+      "pedagogy": {
+        "why_now": "处理完当前节点后，prev 和 curr 都向前移动一步，准备处理下一个节点。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 5,
+      "event_type": "save_next",
+      "message": "保存 curr.next 到 next_temp（curr.val=2，next_temp=3）",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:curr",
+          "ptr:next_temp"
+        ]
+      },
+      "before": {
+        "curr.val": 2,
+        "curr.next": 3,
+        "next_temp": 3
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "必须先把 curr.next 存下来，因为下一步要断开这个箭头。不保存的话，后面的链表就丢了。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 6,
+      "event_type": "link_set",
+      "message": "反转箭头：curr.next 现在指向 prev（curr.val=2 → prev=1）",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:curr",
+          "ptr:prev"
+        ],
+        "edge": "curr->prev"
+      },
+      "before": {
+        "curr.val": 2,
+        "prev": 1
+      },
+      "after": {
+        "curr.next": 1
+      },
+      "pedagogy": {
+        "why_now": "核心动作：把当前节点的 next 指针掉头，从指向下一个变成指向前一个。这就是'反转'。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 7,
+      "event_type": "cursor_move",
+      "message": "移动指针：prev 前进到 curr，curr 前进到 next_temp（prev.val=2）",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:prev",
+          "ptr:curr"
+        ]
+      },
+      "before": {
+        "prev": 2,
+        "curr": 3
+      },
+      "after": {
+        "prev": 2,
+        "curr": 3
+      },
+      "pedagogy": {
+        "why_now": "处理完当前节点后，prev 和 curr 都向前移动一步，准备处理下一个节点。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 8,
+      "event_type": "save_next",
+      "message": "保存 curr.next 到 next_temp（curr.val=3，next_temp=4）",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:curr",
+          "ptr:next_temp"
+        ]
+      },
+      "before": {
+        "curr.val": 3,
+        "curr.next": 4,
+        "next_temp": 4
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "必须先把 curr.next 存下来，因为下一步要断开这个箭头。不保存的话，后面的链表就丢了。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 9,
+      "event_type": "link_set",
+      "message": "反转箭头：curr.next 现在指向 prev（curr.val=3 → prev=2）",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:curr",
+          "ptr:prev"
+        ],
+        "edge": "curr->prev"
+      },
+      "before": {
+        "curr.val": 3,
+        "prev": 2
+      },
+      "after": {
+        "curr.next": 2
+      },
+      "pedagogy": {
+        "why_now": "核心动作：把当前节点的 next 指针掉头，从指向下一个变成指向前一个。这就是'反转'。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 10,
+      "event_type": "cursor_move",
+      "message": "移动指针：prev 前进到 curr，curr 前进到 next_temp（prev.val=3）",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:prev",
+          "ptr:curr"
+        ]
+      },
+      "before": {
+        "prev": 3,
+        "curr": 4
+      },
+      "after": {
+        "prev": 3,
+        "curr": 4
+      },
+      "pedagogy": {
+        "why_now": "处理完当前节点后，prev 和 curr 都向前移动一步，准备处理下一个节点。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 11,
+      "event_type": "save_next",
+      "message": "保存 curr.next 到 next_temp（curr.val=4，next_temp=5）",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:curr",
+          "ptr:next_temp"
+        ]
+      },
+      "before": {
+        "curr.val": 4,
+        "curr.next": 5,
+        "next_temp": 5
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "必须先把 curr.next 存下来，因为下一步要断开这个箭头。不保存的话，后面的链表就丢了。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 12,
+      "event_type": "link_set",
+      "message": "反转箭头：curr.next 现在指向 prev（curr.val=4 → prev=3）",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:curr",
+          "ptr:prev"
+        ],
+        "edge": "curr->prev"
+      },
+      "before": {
+        "curr.val": 4,
+        "prev": 3
+      },
+      "after": {
+        "curr.next": 3
+      },
+      "pedagogy": {
+        "why_now": "核心动作：把当前节点的 next 指针掉头，从指向下一个变成指向前一个。这就是'反转'。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 13,
+      "event_type": "cursor_move",
+      "message": "移动指针：prev 前进到 curr，curr 前进到 next_temp（prev.val=4）",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:prev",
+          "ptr:curr"
+        ]
+      },
+      "before": {
+        "prev": 4,
+        "curr": 5
+      },
+      "after": {
+        "prev": 4,
+        "curr": 5
+      },
+      "pedagogy": {
+        "why_now": "处理完当前节点后，prev 和 curr 都向前移动一步，准备处理下一个节点。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 14,
+      "event_type": "save_next",
+      "message": "保存 curr.next 到 next_temp（curr.val=5，next_temp=None）",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:curr",
+          "ptr:next_temp"
+        ]
+      },
+      "before": {
+        "curr.val": 5,
+        "curr.next": null,
+        "next_temp": null
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "必须先把 curr.next 存下来，因为下一步要断开这个箭头。不保存的话，后面的链表就丢了。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 15,
+      "event_type": "link_set",
+      "message": "反转箭头：curr.next 现在指向 prev（curr.val=5 → prev=4）",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:curr",
+          "ptr:prev"
+        ],
+        "edge": "curr->prev"
+      },
+      "before": {
+        "curr.val": 5,
+        "prev": 4
+      },
+      "after": {
+        "curr.next": 4
+      },
+      "pedagogy": {
+        "why_now": "核心动作：把当前节点的 next 指针掉头，从指向下一个变成指向前一个。这就是'反转'。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 16,
+      "event_type": "cursor_move",
+      "message": "移动指针：prev 前进到 curr，curr 前进到 next_temp（prev.val=5）",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "ptr:prev",
+          "ptr:curr"
+        ]
+      },
+      "before": {
+        "prev": 5,
+        "curr": null
+      },
+      "after": {
+        "prev": 5,
+        "curr": null
+      },
+      "pedagogy": {
+        "why_now": "处理完当前节点后，prev 和 curr 都向前移动一步，准备处理下一个节点。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    },
+    {
+      "step": 17,
+      "event_type": "return",
+      "message": "循环结束（curr=None），prev 就是新的头节点（prev.val=5）。返回 prev。",
+      "phase": "execute",
+      "highlight": null,
+      "before": null,
+      "after": {
+        "result": 5
+      },
+      "pedagogy": {
+        "mental_model": "当 curr 走到 None 时，说明原来的链表末尾已经到了。prev 此时指向的就是反转后的新头部。"
+      },
+      "line": null,
+      "timestamp_ms": 0
+    }
+  ]
+}

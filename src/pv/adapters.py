@@ -49,18 +49,22 @@ def adapt_output(value, adapter_config: dict | None):
 def _deserialize(raw, kind: str):
     if kind == "builtin":
         return raw
+    elif kind == "linked_list":
+        return _build_linked_list(raw)
     raise AdapterError(
         f"Unknown input kind: {kind}",
-        user_message=f"不支持的输入类型 {kind}。当前支持：builtin。",
+        user_message=f"不支持的输入类型 {kind}。当前支持：builtin, linked_list。",
     )
 
 
 def _serialize(value, kind: str):
     if kind == "builtin":
         return value
+    elif kind == "linked_list":
+        return _list_from_linked_list(value)
     raise AdapterError(
         f"Unknown output kind: {kind}",
-        user_message=f"不支持的输出类型 {kind}。当前支持：builtin。",
+        user_message=f"不支持的输出类型 {kind}。当前支持：builtin, linked_list。",
     )
 
 
@@ -81,9 +85,16 @@ def _build_linked_list(values: list):
 
 
 def _list_from_linked_list(head) -> list:
-    """Convert a linked list to a plain list of values."""
+    """Convert a linked list to a plain list of values.  Detects cycles."""
     result: list = []
+    visited: set[int] = set()
     while head:
+        if id(head) in visited:
+            raise AdapterError(
+                "Linked list has a cycle",
+                user_message="链表检测到环，无法序列化（链表中存在循环引用）。",
+            )
+        visited.add(id(head))
         result.append(head.val)
         head = head.next
     return result

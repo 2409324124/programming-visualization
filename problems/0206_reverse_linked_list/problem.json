@@ -1,0 +1,39 @@
+{
+  "problem_id": "0206_reverse_linked_list",
+  "display_title": "反转链表",
+  "pattern_tags": ["linked_list"],
+  "difficulty": "easy",
+  "entry": {
+    "class_name": "Solution",
+    "method_name": "reverseList"
+  },
+  "input_schema": {
+    "type": "object",
+    "fields": [
+      {"name": "head", "type": "linked_list", "items": "int"}
+    ]
+  },
+  "output_schema": {
+    "type": "linked_list",
+    "description": "反转后的链表头节点"
+  },
+  "checker": {
+    "name": "linked_list_equal",
+    "description": "逐节点比较值"
+  },
+  "adapter": {
+    "input": {
+      "head": {"kind": "linked_list"}
+    },
+    "output": {"kind": "linked_list"}
+  },
+  "limits": {
+    "max_events": 1000
+  },
+  "reference": {
+    "platform": "LeetCode",
+    "id": 206,
+    "title": "Reverse Linked List",
+    "usage": "compatibility reference only"
+  }
+}
