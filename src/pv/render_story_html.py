@@ -8,26 +8,26 @@ import json
 CSS = """\
 *{box-sizing:border-box}
 body{font-family:system-ui,-apple-system,sans-serif;background:#f0f2f5;margin:0;padding:2rem;display:flex;justify-content:center}
-#app{max-width:800px;width:100%}
+#app{width:1000px;max-width:calc(100vw - 48px)}
 #app h1{font-size:1.3rem;margin-bottom:1rem;color:#333}
-#stage{position:relative;background:#fff;border-radius:12px;padding:1.5rem;min-height:360px;box-shadow:0 2px 12px rgba(0,0,0,.06)}
-#arrows{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
-#objects{position:relative;z-index:1}
-.st-obj{position:absolute;display:flex;align-items:center;justify-content:center;border-radius:8px;font-weight:600;font-size:.95rem;transition:opacity .26s ease,transform .26s ease,border-color .26s ease,background .26s ease}
+#stage{position:relative;width:960px;height:520px;background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.06)}
+#arrows{position:absolute;inset:0;z-index:1;pointer-events:none}
+#zones{position:absolute;inset:0;z-index:0}
+.zone{position:absolute;border:1px dashed #e0e0e0;border-radius:8px;background:rgba(245,245,245,.6)}
+.zone-title{position:absolute;top:-22px;left:8px;font-size:.75rem;color:#999;font-weight:600}
+.zone-map{left:50px;top:270px;width:400px;height:90px}
+.zone-result{left:600px;top:380px;width:260px;height:70px}
+#objects{position:absolute;inset:0;z-index:2}
+.st-obj{position:absolute;left:0;top:0;display:flex;align-items:center;justify-content:center;border-radius:8px;font-weight:600;font-size:.95rem;transition:transform .42s ease,opacity .26s ease,background .26s ease,border-color .26s ease,color .26s ease,box-shadow .26s ease;white-space:nowrap}
 .st-normal{background:#f5f5f5;border:2px solid #d0d0d0;color:#333}
-.st-active{background:#e3f2fd;border:2px solid #42a5f5;color:#1565c0;font-weight:700}
+.st-active{background:#e3f2fd;border:2px solid #42a5f5;color:#1565c0;font-weight:700;box-shadow:0 0 0 3px rgba(66,165,245,.25)}
 .st-visited{background:#eee;border:2px dashed #bbb;color:#999}
-.st-new{background:#fff3e0;border:2px solid #ff9800;color:#e65100}
-.st-matched{background:#e8f5e9;border:2px solid #66bb6a;color:#2e7d32;font-weight:700}
-.st-faded{opacity:0.25}
-.st-label{border:none;background:transparent;color:#666;font-weight:400;font-size:.85rem}
-.st-badge{border:none;background:#f5f5f5;color:#555;font-size:.8rem;padding:4px 10px}
+.st-new{background:#fff3e0;border:2px solid #ff9800;color:#e65100;box-shadow:0 0 0 3px rgba(255,152,0,.2)}
+.st-matched{background:#e8f5e9;border:2px solid #66bb6a;color:#2e7d32;font-weight:700;box-shadow:0 0 0 3px rgba(102,187,106,.25)}
+.st-faded{opacity:0.18;pointer-events:none}
+.st-label{background:transparent;border:none;color:#666;font-weight:400;font-size:.85rem}
 .st-idx{position:absolute;bottom:-20px;font-size:.7rem;color:#999;text-align:center;left:0;right:0}
-#map-zone{margin-top:1rem;padding:.8rem 1rem;background:#fafafa;border:1px solid #e0e0e0;border-radius:8px;min-height:60px}
-#map-zone h3{margin:0 0 .4rem;font-size:.9rem;color:#555}
-.map-entry{display:inline-block;margin:2px 4px;padding:3px 10px;border-radius:4px;font-size:.82rem;background:#fff;border:1px solid #e0e0e0}
-.map-empty{color:#bbb;font-size:.85rem}
-#caption-area{margin-top:1rem;padding:0 .2rem}
+#caption-area{margin-top:1rem;padding:0 .4rem}
 #frame-title{font-size:1.05rem;margin:0 0 .3rem;color:#333}
 #frame-caption{margin:0;color:#666;font-size:.92rem;line-height:1.5}
 #controls{margin-top:1.2rem;display:flex;align-items:center;gap:.6rem}
@@ -42,9 +42,9 @@ JS = """\
 (function() {
   var current = 0;
   var total = FRAMES.length;
+  var stage = document.getElementById('stage');
   var objDiv = document.getElementById('objects');
   var svg = document.getElementById('arrows');
-  var mapZone = document.getElementById('map-zone');
   var titleEl = document.getElementById('frame-title');
   var captionEl = document.getElementById('frame-caption');
   var counterEl = document.getElementById('counter');
@@ -53,66 +53,93 @@ JS = """\
   var playBtn = document.getElementById('btn-play');
   var playing = false;
   var timer = null;
-  var SVG_NS = 'http' + '://www.w3.org/2000/svg';
+  var SVG_NS = 'http://www.w3.org/2000/svg';
+  var objectNodes = {};
 
-  // Create arrowhead marker
-  var defs = document.createElementNS(SVG_NS, 'defs');
-  var marker = document.createElementNS(SVG_NS, 'marker');
-  marker.setAttribute('id', 'arrowhead');
-  marker.setAttribute('markerWidth', '6');
-  marker.setAttribute('markerHeight', '6');
-  marker.setAttribute('refX', '5');
-  marker.setAttribute('refY', '3');
-  marker.setAttribute('orient', 'auto');
-  var mpath = document.createElementNS(SVG_NS, 'path');
-  mpath.setAttribute('d', 'M0,0 L6,3 L0,6 Z');
-  mpath.setAttribute('fill', '#90caf9');
-  marker.appendChild(mpath);
-  defs.appendChild(marker);
-  svg.appendChild(defs);
+  // Arrowhead marker
+  (function(){
+    var defs = document.createElementNS(SVG_NS, 'defs');
+    var m = document.createElementNS(SVG_NS, 'marker');
+    m.setAttribute('id', 'arrowhead');
+    m.setAttribute('markerWidth','6'); m.setAttribute('markerHeight','6');
+    m.setAttribute('refX','5'); m.setAttribute('refY','3');
+    m.setAttribute('orient','auto');
+    var p = document.createElementNS(SVG_NS, 'path');
+    p.setAttribute('d','M0,0 L6,3 L0,6 Z'); p.setAttribute('fill','#90caf9');
+    m.appendChild(p); defs.appendChild(m); svg.appendChild(defs);
+  })();
 
   function render(idx) {
     var f = FRAMES[idx];
     titleEl.textContent = f.title || '';
     captionEl.textContent = f.caption || '';
 
-    // Clear & render objects
-    objDiv.innerHTML = '';
     var objs = f.objects || [];
+    var seen = {};
+
+    // Build/update objects
     for (var i = 0; i < objs.length; i++) {
       var o = objs[i];
-      var div = document.createElement('div');
-      div.className = 'st-obj st-' + (o.state || 'normal');
-      div.style.left = (o.x || 0) + 'px';
-      div.style.top = (o.y || 0) + 'px';
-      div.style.width = (o.w || 56) + 'px';
-      div.style.height = (o.h || 48) + 'px';
-      div.textContent = o.text || '';
-      objDiv.appendChild(div);
+      seen[o.id] = true;
+      var node = objectNodes[o.id];
+      var created = false;
+
+      if (!node) {
+        node = document.createElement('div');
+        node.style.position = 'absolute';
+        node.style.left = '0';
+        node.style.top = '0';
+        node.style.width = (o.w || 64) + 'px';
+        node.style.height = (o.h || 48) + 'px';
+        objectNodes[o.id] = node;
+        objDiv.appendChild(node);
+        created = true;
+      }
+
+      // Update class
+      node.className = 'st-obj st-' + (o.state || 'normal');
+      // Update transform (smooth CSS transition)
+      node.style.transform = 'translate(' + (o.x || 0) + 'px,' + (o.y || 0) + 'px)';
+      node.style.width = (o.w || 64) + 'px';
+      node.style.height = (o.h || 48) + 'px';
+      node.textContent = o.text || '';
 
       // Index label for array boxes
       if (o.type === 'array_box' && o.idx !== undefined) {
-        var lbl = document.createElement('div');
-        lbl.className = 'st-obj st-label';
-        lbl.style.position = 'absolute';
-        lbl.style.left = o.x + 'px';
-        lbl.style.top = (o.y + (o.h || 48)) + 'px';
-        lbl.style.width = (o.w || 56) + 'px';
-        lbl.style.border = 'none';
-        lbl.style.background = 'transparent';
-        var sp = document.createElement('span');
-        sp.className = 'st-idx';
-        sp.textContent = '[' + o.idx + ']';
-        lbl.appendChild(sp);
-        objDiv.appendChild(lbl);
+        var labelId = o.id + '_idx';
+        var lbl = objectNodes[labelId];
+        if (!lbl) {
+          lbl = document.createElement('div');
+          lbl.style.position = 'absolute';
+          lbl.style.left = '0';
+          lbl.style.top = '0';
+          lbl.style.border = 'none';
+          lbl.style.background = 'transparent';
+          lbl.style.color = '#999';
+          lbl.style.fontSize = '.7rem';
+          lbl.style.textAlign = 'center';
+          objectNodes[labelId] = lbl;
+          objDiv.appendChild(lbl);
+        }
+        seen[labelId] = true;
+        lbl.style.transform = 'translate(' + (o.x || 0) + 'px,' + ((o.y || 0) + (o.h || 48)) + 'px)';
+        lbl.style.width = (o.w || 64) + 'px';
+        lbl.textContent = '[' + o.idx + ']';
       }
     }
 
-    // Clear & render arrows
-    // Preserve the <defs> element
-    while (svg.childNodes.length > 1) {
-      svg.removeChild(svg.lastChild);
+    // Remove objects no longer in frame
+    for (var key in objectNodes) {
+      if (!seen[key]) {
+        var old = objectNodes[key];
+        old.style.opacity = '0';
+        setTimeout(function(n){ return function(){ if(n.parentNode)n.parentNode.removeChild(n); }; }(old), 300);
+        delete objectNodes[key];
+      }
     }
+
+    // Arrows
+    while (svg.childNodes.length > 1) { svg.removeChild(svg.lastChild); }
     var arrows = f.arrows || [];
     for (var j = 0; j < arrows.length; j++) {
       var a = arrows[j];
@@ -122,71 +149,34 @@ JS = """\
         if (objs[k].id === a.to) toObj = objs[k];
       }
       if (fromObj && toObj) {
-        var x1 = (fromObj.x || 0) + (fromObj.w || 56) / 2;
+        var x1 = (fromObj.x || 0) + (fromObj.w || 64) / 2;
         var y1 = (fromObj.y || 0) + (fromObj.h || 48) / 2;
-        var x2 = (toObj.x || 0) + (toObj.w || 56) / 2;
+        var x2 = (toObj.x || 0) + (toObj.w || 64) / 2;
         var y2 = (toObj.y || 0) + (toObj.h || 48) / 2;
         var line = document.createElementNS(SVG_NS, 'line');
-        line.setAttribute('x1', x1);
-        line.setAttribute('y1', y1);
-        line.setAttribute('x2', x2);
-        line.setAttribute('y2', y2);
-        line.setAttribute('stroke', a.color || '#90caf9');
-        line.setAttribute('stroke-width', '2');
+        line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+        line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+        var color = a.color || (a.label === 'match' ? '#66bb6a' : '#90caf9');
+        line.setAttribute('stroke', color);
+        line.setAttribute('stroke-width', '2.5');
         line.setAttribute('marker-end', 'url(#arrowhead)');
         svg.appendChild(line);
       }
     }
 
-    // Map zone
-    mapZone.innerHTML = '<h3>Hash Map</h3>';
-    var mapEntries = [];
-    for (var m = 0; m < objs.length; m++) {
-      if (objs[m].type === 'map_entry') mapEntries.push(objs[m]);
-    }
-    if (mapEntries.length === 0) {
-      var emptySpan = document.createElement('span');
-      emptySpan.className = 'map-empty';
-      emptySpan.textContent = '(empty)';
-      mapZone.appendChild(emptySpan);
-    } else {
-      for (var n = 0; n < mapEntries.length; n++) {
-        var me = mapEntries[n];
-        var entry = document.createElement('span');
-        entry.className = 'map-entry';
-        if (me.state) entry.className += ' st-' + me.state;
-        entry.textContent = me.text || '';
-        mapZone.appendChild(entry);
-      }
-    }
-
-    // Counter & buttons
     counterEl.textContent = (idx + 1) + ' / ' + total;
     prevBtn.disabled = (idx === 0);
     nextBtn.disabled = (idx === total - 1);
   }
 
-  prevBtn.onclick = function() {
-    if (current > 0) render(--current);
+  // Controls
+  prevBtn.onclick = function(){ if(current>0)render(--current); };
+  nextBtn.onclick = function(){ if(current<total-1)render(++current); };
+  playBtn.onclick = function(){
+    if(playing){ clearInterval(timer); playing=false; playBtn.textContent='\\u25b6 \\u64ad\\u653e'; }
+    else{ playing=true; playBtn.textContent='\\u23f8 \\u6682\\u505c';
+      timer=setInterval(function(){ if(current<total-1)render(++current); else{clearInterval(timer);playing=false;playBtn.textContent='\\u25b6 \\u64ad\\u653e';} },1800); }
   };
-  nextBtn.onclick = function() {
-    if (current < total - 1) render(++current);
-  };
-  playBtn.onclick = function() {
-    if (playing) {
-      clearInterval(timer);
-      playing = false;
-      playBtn.textContent = '\\u25b6 \\u64ad\\u653e';
-    } else {
-      playing = true;
-      playBtn.textContent = '\\u23f8 \\u6682\\u505c';
-      timer = setInterval(function() {
-        if (current < total - 1) render(++current);
-        else { clearInterval(timer); playing = false; playBtn.textContent = '\\u25b6 \\u64ad\\u653e'; }
-      }, 1800);
-    }
-  };
-
   render(0);
 })();
 """
@@ -209,10 +199,10 @@ TEMPLATE = """\
 
     <div id="stage">
       <svg id="arrows"></svg>
-      <div id="objects"></div>
-      <div id="map-zone">
-        <h3>Hash Map</h3>
+      <div id="zones">
+        <div class="zone zone-map"><div class="zone-title">Hash Map</div></div>
       </div>
+      <div id="objects"></div>
     </div>
 
     <div id="caption-area">
@@ -250,7 +240,7 @@ def render_story_to_html(frames: list[dict], title: str = "Storyboard Demo") -> 
             - ``id`` (str): unique identifier (used for arrows)
             - ``text`` (str): display label
             - ``x``, ``y`` (int): absolute position in stage
-            - ``w``, ``h`` (int, optional): size (default 56×48)
+            - ``w``, ``h`` (int, optional): size (default 64×48)
             - ``state`` (str, optional): one of normal/active/visited/new/matched/faded
             - ``type`` (str, optional): ``'array_box'`` for indexed boxes,
               ``'map_entry'`` for hash-map entries

@@ -54,8 +54,9 @@ class TestRenderStoryHtml(unittest.TestCase):
     def test_no_cdn_links(self):
         from pv.render_story_html import render_story_to_html
         html = render_story_to_html(self.frames)
-        self.assertNotIn("https://", html)
-        self.assertNotIn("http://", html)
+        cleaned = html.replace("http://www.w3.org/2000/svg", "")
+        self.assertNotIn("https://", cleaned)
+        self.assertNotIn("http://", cleaned)
 
     def test_cli_writes_file(self):
         from pv.render_story_html import render_story_to_html
@@ -66,6 +67,51 @@ class TestRenderStoryHtml(unittest.TestCase):
                 f.write(html)
             self.assertTrue(os.path.isfile(path))
             self.assertGreater(os.path.getsize(path), 500)
+
+    def test_no_mapzone_innerhtml_clearing(self):
+        """The JS should NOT use mapZone.innerHTML = '' (duplicate rendering removed)."""
+        from pv.render_story_html import render_story_to_html
+        html = render_story_to_html(self.frames)
+        # Should not contain old map-zone clearing pattern
+        self.assertNotIn("mapZone.innerHTML", html)
+
+    def test_uses_keyed_object_nodes(self):
+        """JS should use objectNodes dict for keyed DOM reuse (not innerHTML = '' on objects)."""
+        from pv.render_story_html import render_story_to_html
+        html = render_story_to_html(self.frames)
+        self.assertIn("objectNodes", html,
+            "Should use keyed DOM objectNodes for animation")
+
+    def test_uses_transform_translate(self):
+        """Object positioning should use JS transform assignment for CSS animation."""
+        from pv.render_story_html import render_story_to_html
+        html = render_story_to_html(self.frames)
+        self.assertIn(".transform = 'translate(", html,
+            "Should use JS transform assignment for smooth animation")
+
+    def test_has_transform_transition(self):
+        """CSS should include transition on transform property."""
+        from pv.render_story_html import render_story_to_html
+        html = render_story_to_html(self.frames)
+        self.assertIn("transition", html)
+        self.assertIn("transform", html)
+
+    def test_no_objdiv_innerhtml_clear(self):
+        """JS should NOT use objDiv.innerHTML = '' (destroys transitions)."""
+        from pv.render_story_html import render_story_to_html
+        html = render_story_to_html(self.frames)
+        self.assertNotIn("objDiv.innerHTML", html,
+            "Should not clear innerHTML (breaks CSS transitions)")
+
+    def test_no_http_links(self):
+        """HTML must be offline — no CDN or external resource references.
+        SVG namespace (w3.org) is allowed."""
+        from pv.render_story_html import render_story_to_html
+        html = render_story_to_html(self.frames)
+        # Remove SVG namespace (required for inline SVG, not a CDN)
+        cleaned = html.replace("http://www.w3.org/2000/svg", "")
+        self.assertNotIn("http://", cleaned)
+        self.assertNotIn("https://", cleaned)
 
 
 if __name__ == "__main__":

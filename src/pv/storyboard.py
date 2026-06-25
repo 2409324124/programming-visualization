@@ -5,33 +5,36 @@ arrows (data-flow), and badges (contextual info like the target value).
 """
 
 # ── Layout constants ────────────────────────────────────────────────
-TARGET_LABEL_X = 80
-TARGET_LABEL_Y = 40
+STAGE_W = 960
+STAGE_H = 520
 
-ARRAY_BOX_Y = 120
-ARRAY_BOX_W = 56
-ARRAY_BOX_H = 48
-ARRAY_BOX_X_START = 80
-ARRAY_BOX_X_GAP = 80
+TARGET_LABEL_X = 60
+TARGET_LABEL_Y = 36
 
-COMPLEMENT_X = 540
-COMPLEMENT_Y = 120
-COMPLEMENT_W = 72
-COMPLEMENT_H = 40
+ARRAY_BOX_Y = 150
+ARRAY_BOX_W = 64
+ARRAY_BOX_H = 56
+ARRAY_BOX_X_START = 120
+ARRAY_BOX_X_GAP = 100
 
-MAP_TITLE_X = 80
-MAP_TITLE_Y = 220
+COMPLEMENT_X = 650
+COMPLEMENT_Y = 150
+COMPLEMENT_W = 110
+COMPLEMENT_H = 48
 
-MAP_ENTRY_Y = 260
-MAP_ENTRY_W = 80
-MAP_ENTRY_H = 40
-MAP_ENTRY_X_START = 80
-MAP_ENTRY_X_GAP = 100
+MAP_TITLE_X = 60
+MAP_TITLE_Y = 280
 
-ANSWER_X = 100
-ANSWER_Y = 380
-ANSWER_W = 120
-ANSWER_H = 48
+MAP_ENTRY_Y = 335
+MAP_ENTRY_W = 110
+MAP_ENTRY_H = 48
+MAP_ENTRY_X_START = 120
+MAP_ENTRY_X_GAP = 130
+
+ANSWER_X = 650
+ANSWER_Y = 400
+ANSWER_W = 150
+ANSWER_H = 56
 
 
 # ── Object factories ────────────────────────────────────────────────
@@ -122,6 +125,25 @@ def _map_entry(key: int, idx: int, slot: int, state: str = "normal") -> dict:
         "text": f"{key} \u2192 {idx}",
         "x": MAP_ENTRY_X_START + slot * MAP_ENTRY_X_GAP,
         "y": MAP_ENTRY_Y,
+        "w": MAP_ENTRY_W,
+        "h": MAP_ENTRY_H,
+        "state": state,
+    }
+
+
+def _ghost_map_entry(key: int, idx: int, x: int, y: int, state: str = "faded") -> dict:
+    """A map entry placed at an arbitrary position (e.g. over an array box).
+
+    Using the same ``id`` as a normal ``_map_entry`` lets the HTML renderer
+    animate the element from the ghost position to the real map position via
+    CSS transitions on keyed DOM nodes.
+    """
+    return {
+        "id": f"map:{key}",
+        "type": "map_entry",
+        "text": f"{key} \u2192 {idx}",
+        "x": x,
+        "y": y,
         "w": MAP_ENTRY_W,
         "h": MAP_ENTRY_H,
         "state": state,
@@ -221,6 +243,7 @@ def build_storyboard(trace_data: dict) -> list[dict]:
 
     # ── Frame 2: check_complement_7 ────────────────────────────────
     # step=2, hash_map_get: complement not found (map empty)
+    # Ghost map:2 placed at arr:0 position so it can fly to the map zone in frame 3.
     frames.append(
         {
             "frame_id": "check_complement_7",
@@ -231,8 +254,8 @@ def build_storyboard(trace_data: dict) -> list[dict]:
                 [_target_label(target)]
                 + _arr_boxes({0: "visited"})
                 + all_index_labels
-                + [_complement_box(complement0, "faded")]
                 + [_map_zone_title(), _map_empty_label()]
+                + [_ghost_map_entry(num0, 0, ARRAY_BOX_X_START + 0 * ARRAY_BOX_X_GAP, ARRAY_BOX_Y, "faded")]
             ),
             "arrows": [],
             "badges": [badge],
@@ -241,6 +264,7 @@ def build_storyboard(trace_data: dict) -> list[dict]:
 
     # ── Frame 3: store_2_in_map ────────────────────────────────────
     # step=3, hash_map_put: store num0 → index 0
+    # map:2 moves from ghost position to its real map slot (same id = CSS transition).
     frames.append(
         {
             "frame_id": "store_2_in_map",
@@ -256,7 +280,7 @@ def build_storyboard(trace_data: dict) -> list[dict]:
                 + all_index_labels
                 + [_map_zone_title(), _map_entry(num0, 0, 0, "new")]
             ),
-            "arrows": [{"id": "arrow:0", "from": f"arr:{i0}", "to": f"map:{num0}", "label": "store"}],
+            "arrows": [{"id": "arrow:store", "from": f"arr:{i0}", "to": f"map:{num0}", "label": "store"}],
             "badges": [badge],
         }
     )
@@ -306,7 +330,7 @@ def build_storyboard(trace_data: dict) -> list[dict]:
                 + all_index_labels
                 + [_map_zone_title(), _map_entry(num0, 0, 0, "matched")]
             ),
-            "arrows": [{"id": "arrow:1", "from": f"arr:{i1}", "to": f"map:{num0}", "label": "match"}],
+            "arrows": [{"id": "arrow:match", "from": f"arr:{i1}", "to": f"map:{num0}", "label": "match"}],
             "badges": [badge],
         }
     )

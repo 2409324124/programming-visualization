@@ -57,6 +57,52 @@ class TestStoryboard(unittest.TestCase):
         with self.assertRaises((ValueError, NotImplementedError)):
             build_storyboard(other)
 
+    def test_map_entry_has_stable_id_across_frames(self):
+        """map:2 should appear in multiple frames with same id (for keyed DOM animation)."""
+        frames = build_storyboard(self.trace)
+        map_ids = set()
+        for f in frames:
+            for o in f.get("objects", []):
+                if o.get("id", "").startswith("map:"):
+                    map_ids.add(o["id"])
+        self.assertIn("map:2", map_ids)
+
+    def test_map_entry_position_changes_for_motion(self):
+        """map:2 should be at different positions in different frames (enables translation animation)."""
+        frames = build_storyboard(self.trace)
+        positions = []
+        for f in frames:
+            for o in f.get("objects", []):
+                if o.get("id") == "map:2":
+                    positions.append((o.get("x"), o.get("y")))
+        # Should have at least 2 different positions
+        self.assertGreaterEqual(len(set(positions)), 2,
+            "map:2 should move between frames for translation animation")
+
+    def test_array_boxes_are_spaced_apart(self):
+        """Array boxes should have at least 90px gap between them."""
+        frames = build_storyboard(self.trace)
+        f = frames[0]
+        arr_boxes = sorted([o for o in f["objects"] if o["type"] == "array_box"], key=lambda o: o["x"])
+        self.assertGreaterEqual(len(arr_boxes), 4)
+        for i in range(len(arr_boxes) - 1):
+            gap = arr_boxes[i+1]["x"] - arr_boxes[i]["x"]
+            self.assertGreaterEqual(gap, 90, f"Gap between arr boxes should be >= 90, got {gap}")
+
+    def test_answer_box_not_overlapping_array(self):
+        """Answer box should be below array boxes on y-axis."""
+        frames = build_storyboard(self.trace)
+        last_frame = frames[-1]
+        arr_boxes = [o for o in last_frame["objects"] if o["type"] == "array_box"]
+        answer_boxes = [o for o in last_frame["objects"] if o["type"] == "answer_box"]
+        if answer_boxes and arr_boxes:
+            self.assertGreater(answer_boxes[0]["y"], arr_boxes[0]["y"] + 30,
+                "Answer box should be below array boxes")
+
+    def test_frame_count(self):
+        frames = build_storyboard(self.trace)
+        self.assertGreaterEqual(len(frames), 7)
+
 
 if __name__ == "__main__":
     unittest.main()
