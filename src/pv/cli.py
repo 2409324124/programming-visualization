@@ -226,6 +226,42 @@ def cmd_render_text(args: argparse.Namespace) -> None:
     print(output)
 
 
+# ── subcommand: render-html ────────────────────────────────────────────
+
+
+def cmd_render_html(args: argparse.Namespace) -> None:
+    """Execute the 'render-html' subcommand."""
+    trace_path = args.trace_json_path
+
+    if not os.path.isfile(trace_path):
+        print(f"错误: trace 文件不存在: {trace_path}", file=sys.stderr)
+        sys.exit(1)
+
+    try:
+        with open(trace_path, encoding="utf-8") as f:
+            trace_data = json.load(f)
+    except (json.JSONDecodeError, OSError) as exc:
+        print(f"错误: 无法读取 trace 文件: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+    try:
+        from pv.render_html import render_trace_to_html
+    except ImportError:
+        print("错误: pv.render_html 模块尚未实现。", file=sys.stderr)
+        sys.exit(1)
+
+    html_output = render_trace_to_html(trace_data)
+
+    output_path = args.output
+    if output_path:
+        os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write(html_output)
+        print(f"HTML 已写入: {output_path}")
+    else:
+        print(html_output)
+
+
 # ── main ───────────────────────────────────────────────────────────────
 
 
@@ -254,11 +290,18 @@ def main():
     render_parser = subparsers.add_parser("render-text", help="渲染 trace JSON 为文本")
     render_parser.add_argument("trace_json_path", help="trace JSON 文件路径")
 
+    # render-html subcommand
+    render_html_parser = subparsers.add_parser("render-html", help="渲染 trace JSON 为 HTML")
+    render_html_parser.add_argument("trace_json_path", help="trace JSON 文件路径")
+    render_html_parser.add_argument("--output", "-o", help="输出 HTML 文件路径（不指定则打印到 stdout）")
+
     args = parser.parse_args()
 
     if args.command == "run":
         cmd_run(args)
     elif args.command == "render-text":
         cmd_render_text(args)
+    elif args.command == "render-html":
+        cmd_render_html(args)
     else:
         parser.print_help()

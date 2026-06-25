@@ -278,7 +278,34 @@ For longer traces, add:
 
 This lets the renderer jump to any step without replaying thousands of events.
 
-## 10. Renderer Contract
+## 10. Verified Event Vocabulary
+
+The following event types are confirmed working across the first two problems
+(0001_two_sum, 0011_container_with_most_water).  Every event listed here has
+a corresponding trace event in at least one committed `trace.sample.json`.
+
+| event_type           | problem(s)                      | section  | description                         |
+|----------------------|---------------------------------|----------|-------------------------------------|
+| `array_read`         | two_sum                         | 7.1      | 读取数组元素，记录 index + value    |
+| `hash_map_get`       | two_sum                         | 7.1      | 在哈希表中查找补数                  |
+| `hash_map_put`       | two_sum                         | 7.1      | 将当前值存入哈希表                  |
+| `answer_found`       | two_sum                         | 7.1      | 找到最终答案                        |
+| `pointer_init`       | container_with_most_water       | 7.2      | 初始化左右指针                      |
+| `area_compute`       | container_with_most_water       | 7.2*     | 计算当前面积（width × min_height）  |
+| `best_update`        | container_with_most_water       | 7.2      | 更新最佳记录                        |
+| `comparison_reason`  | container_with_most_water       | 7.2      | 说明为什么移动某一侧指针            |
+| `pointer_move`       | container_with_most_water       | 7.2      | 指针实际移动到新位置                |
+| `return`             | two_sum, container_with_most_water | 7.1   | 返回最终结果                        |
+
+> `area_compute` is a custom event specific to container-type problems.  It
+> belongs to the two-pointers family but is not listed in the original draft
+> vocabulary; it is included here as a verified extension.
+
+New event types can be added when a new problem requires them.  After a
+problem is committed with its `trace.sample.json`, append the new event
+type(s) to this table.
+
+## 11. Renderer Contract
 
 A renderer should be able to consume trace JSON and produce one of:
 
@@ -290,7 +317,7 @@ A renderer should be able to consume trace JSON and produce one of:
 
 The same trace should be usable by multiple renderers.
 
-## 11. Versioning
+## 12. Versioning
 
 Use semantic trace versions:
 
