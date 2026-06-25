@@ -37,9 +37,44 @@ uv run python -m pv run problems/0001_two_sum --solution visual_solution.py --sa
 
 # 6. 渲染保存的 trace 为文本
 uv run python -m pv render-text problems/0001_two_sum/trace.sample.json
+
+# 7. 渲染为 HTML（支持 DP table、链表、数组可视化）
+uv run python -m pv render-html problems/0070_climbing_stairs/trace.sample.json --output examples/0070_climbing_stairs.case0.html
 ```
 
 > 如果不使用 uv，可以用标准 venv：`python3 -m venv .venv && source .venv/bin/activate && pip install -e .`，之后不需要 `uv run` 前缀。
+
+## Implemented Problems
+
+| ID | Problem | Pattern | Trace Events |
+|----|---------|---------|--------------|
+| `0001` | Two Sum | array, hash_map | array_read, hash_map_get, hash_map_put, answer_found |
+| `0011` | Container With Most Water | two_pointers, greedy | pointer_init, area_compute, best_update, comparison_reason, pointer_move |
+| `0206` | Reverse Linked List | linked_list | pointer_init, save_next, link_set, cursor_move |
+| `0070` | Climbing Stairs | dynamic_programming | dp_init, dp_read, transition_considered, dp_write |
+
+## Visualization Types
+
+| Type | Description | Supported |
+|------|-------------|-----------|
+| Array + Hash Map | Cell grid with highlighted indices | ✅ |
+| Two Pointers | Pointer labels + comparison reasoning | ✅ |
+| Linked List Node-Edge | Node boxes + arrow edges + prev/curr/next labels | ✅ |
+| DP Table | Cell grid with read (blue) and write (orange) highlights | ✅ |
+| Vectorized / NumPy | Operation graph trace | 🔮 design doc only |
+
+## Learner Mode
+
+This project supports two execution modes:
+
+- **Reference Visualization** (`visual_solution.py`): Full semantic trace with step-by-step events. Best for learning the algorithm.
+- **Learner Validation** (your own `solution.py`): Runs your code, validates output, reports pass/fail. No fake trace events.
+
+> Learner submissions are checked for disallowed imports (e.g. `os`, `numpy`).
+> See [learner-submissions.md](docs/learner-submissions.md) for details.
+
+NumPy is currently not supported. A future `--trace-numpy` mode is described in
+[vectorized-trace.md](docs/vectorized-trace.md).
 
 ## Core Idea
 
@@ -76,6 +111,8 @@ text / HTML / SVG / React visualization
 - [Existing Projects Survey](docs/existing-projects-survey.md)
 - [Online Judge Notes](docs/online-judge-notes.md)
 - [Legal and Licensing Notes](docs/legal-notes.md)
+- [Learner Submissions](docs/learner-submissions.md)
+- [Vectorized Trace Design](docs/vectorized-trace.md)
 
 ## Suggested First 10 Problems
 
@@ -128,4 +165,7 @@ programming-visualization/
 
 ## Non-Affiliation Notice
 
-This project is an independent educational tool for visualizing common programming interview problem patterns. It is not affiliated with, endorsed by, or sponsored by LeetCode. All lesson summaries, examples, test cases, explanations, traces, and visual assets in this repository are original unless otherwise stated.
+This project is an independent educational tool for visualizing common programming interview problem patterns.
+It is not affiliated with, endorsed by, or sponsored by LeetCode.
+All problem summaries, examples, test cases, explanations, traces, and visual assets in this repository are original content.
+This project does not copy LeetCode problem statements, official editorials, hidden tests, or paid content.
