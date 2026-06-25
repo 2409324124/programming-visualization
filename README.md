@@ -5,7 +5,9 @@
 
 一个面向非科班 / 文科背景 / 自学开发者的 **LeetCode-style 编程可视化学习器**。
 
-[→ 在线 Demo Gallery](examples/index.html)
+[→ 在线 Demo Gallery](https://2409324124.github.io/programming-visualization/examples/)
+
+> 本地查看：打开 `examples/index.html`。
 
 目标不是复制 LeetCode，也不是再做一个题解站，而是把经典 `class Solution` 的执行过程变成可理解的可视化故事：
 
