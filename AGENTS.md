@@ -1,5 +1,58 @@
 # AGENTS.md
 
+## 接手文档 — 其他 Agent 看这里
+
+如果你是新来的 AI Agent，请按顺序阅读：
+
+1. `AGENTS.md`（本文件）— 项目总纲 + 硬规则
+2. `README.md` — 项目定位 + Quickstart
+3. `docs/harness-plan.md` — harness 架构设计
+4. `docs/trace-schema.md` — trace 事件词汇表
+5. `docs/public-roadmap.md` — 已完成 / 下一步
+
+**文件速查表：**
+
+| 文件 | 职责 | 关键点 |
+|------|------|--------|
+| `src/pv/harness.py` | 核心执行器 | **唯一执行入口**，adapter/checker/import policy/stdout capture 都在这里 |
+| `src/pv/trace_schema.py` | TraceBuilder + TraceEvent | 输出结构化 trace JSON |
+| `src/pv/learner_trace.py` | sys.settrace 行级追踪 | 只追踪目标方法，不追踪 module/class 定义 |
+| `src/pv/learner_runtime.py` | harness + 行级追踪封装 | render-code 的数据源 |
+| `src/pv/checkers.py` | CheckResult + 内置 checker | exact / unordered_pairs / linked_list_equal |
+| `src/pv/adapters.py` | JSON ↔ 数据结构 | builtin / linked_list（tree 未实现） |
+| `src/pv/structures.py` | ListNode / TreeNode | 数据结构定义 |
+| `src/pv/errors.py` | 所有自定义异常 | 每个异常都有中文 `user_message` |
+| `src/pv/storyboard.py` | **遗留** authored 动画 | 硬编码值，已被 runtime-bound 替代 |
+| `src/pv/story_compiler.py` | lesson-script 编译器 | visual_compiler 的基类 |
+| `src/pv/visual_runtime.py` | runtime-bound 可视化 | **复用 harness.run_case()**，不重复执行逻辑 |
+| `src/pv/visual_binder.py` | lesson ↔ runtime 绑定 | fail-fast 验证一致性 |
+| `src/pv/visual_compiler.py` | 编译 bound lesson 为 frames | 输出 runtime-aware 帧 |
+| `src/pv/cli.py` | 所有 CLI 子命令 | run / render-* / render-visual / render-code |
+
+**硬规则（必须遵守）：**
+
+1. **零外部 pip 依赖。** 纯 Python stdlib。
+2. **绝不重复执行逻辑。** 如果要运行代码，调用 `harness.run_case()`，不要自己写 import/execute/check。`visual_runtime.py` 就是为了修这个问题重写的。
+3. **绝不伪造 trace。** 如果 solution 没有 trace hook，`trace_mode` 为 `validation_only`，events 为空。
+4. **绝不复制 LeetCode 内容。** 所有题面、用例、explain.md 均为原创。
+5. **绝不用 CDN。** 所有 HTML 自包含、可离线打开。
+6. **必须跑测试验证。** `uv run python -m unittest discover -s tests -v`。
+7. **生成 HTML 后必须确认命令跑通了。** 静态看代码 ≠ 验证。
+8. **优先小改，避免大重写。**
+
+**常用命令：**
+
+```bash
+uv run python -m pv run problems/0001_two_sum --all
+uv run python -m pv render-html trace.json --output out.html
+uv run python -m pv render-code problems/0001_two_sum --case-index 0 -o out.html
+uv run python -m pv render-visual problems/0001_two_sum --case-index 0 --lesson lesson.story.json -o out.html
+uv run python -m pv render-story trace.json --output out.html
+uv run python -m unittest discover -s tests -v
+```
+
+**当前状态：** 4 道题目，307 测试全通过，3 种渲染器（text / HTML trace viewer / code viewer），runtime-bound 可视化管线已在 main。
+
 ## Project Mission
 
 This repository is a learning-first programming visualization project.
