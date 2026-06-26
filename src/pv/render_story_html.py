@@ -25,7 +25,18 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f2f5;margin:0;
 .st-new{background:#fff3e0;border:2px solid #ff9800;color:#e65100;box-shadow:0 0 0 3px rgba(255,152,0,.2)}
 .st-matched{background:#e8f5e9;border:2px solid #66bb6a;color:#2e7d32;font-weight:700;box-shadow:0 0 0 3px rgba(102,187,106,.25)}
 .st-faded{opacity:0.18;pointer-events:none}
+.st-definition_card{border:2px solid #42a5f5;background:linear-gradient(135deg,#e3f2fd,#bbdefb);color:#0d47a1;border-radius:12px;font-size:.88rem;flex-direction:column;align-items:flex-start;padding:8px 12px;text-align:left;white-space:pre-line}
+.st-definition_card::before{content:'📖 ' attr(data-title);font-weight:700;font-size:.75rem;color:#1565c0;display:block;margin-bottom:4px}
+.st-rule_card{border:2px solid #ab47bc;background:linear-gradient(135deg,#f3e5f5,#e1bee7);color:#4a148c;border-radius:12px;font-size:.85rem;font-family:monospace;font-weight:600;flex-direction:column;align-items:flex-start;padding:6px 12px;text-align:left;white-space:pre-line}
+.st-rule_card::before{content:'📐 ' attr(data-title);font-weight:700;font-size:.72rem;color:#7b1fa2;display:block;margin-bottom:4px}
+.st-operation_card{border:2px solid #ff9800;background:linear-gradient(135deg,#fff3e0,#ffe0b2);color:#e65100;border-radius:10px;font-size:.82rem;font-weight:600;flex-direction:column;align-items:flex-start;padding:6px 12px;text-align:left;white-space:pre-line}
+.st-operation_card::before{content:'▶ ' attr(data-title);font-weight:700;font-size:.72rem;color:#e65100;display:block;margin-bottom:4px}
+.st-note_card{border:1px dashed #bbb;background:#f9f9f9;color:#888;border-radius:8px;font-size:.78rem;flex-direction:column;align-items:flex-start;padding:4px 10px;text-align:left;white-space:pre-line}
+.st-note_card::before{content:'📝 ' attr(data-title);font-weight:600;font-size:.7rem;color:#aaa;display:block;margin-bottom:3px}
 .st-label{background:transparent;border:none;color:#666;font-weight:400;font-size:.85rem}
+.st-definition{border:2px dashed #42a5f5;background:rgba(227,242,253,0.35);color:#0d47a1;border-radius:10px;font-size:.82rem;align-items:flex-start;padding:8px 12px;text-align:left;white-space:pre-line}
+.st-definition::before{content:'📦 ' attr(data-title);font-weight:700;font-size:.73rem;color:#1565c0;display:block;margin-bottom:4px}
+.st-variable_box{border:2px solid #26a69a;background:linear-gradient(135deg,#e0f2f1,#b2dfdb);color:#00695c;border-radius:8px;font-size:.9rem;font-weight:600}
 .st-idx{position:absolute;bottom:-20px;font-size:.7rem;color:#999;text-align:center;left:0;right:0}
 #caption-area{margin-top:1rem;padding:0 .4rem}
 #frame-title{font-size:1.05rem;margin:0 0 .3rem;color:#333}
@@ -98,6 +109,10 @@ JS = """\
 
       // Update class
       node.className = 'st-obj st-' + (o.state || 'normal');
+      // Set data-title for cards and containers (used by CSS ::before)
+      if (['definition_card','rule_card','operation_card','note_card','definition'].indexOf(o.type) >= 0) {
+          node.setAttribute('data-title', o.title || o.text || '');
+      }
       // Update transform (smooth CSS transition)
       node.style.transform = 'translate(' + (o.x || 0) + 'px,' + (o.y || 0) + 'px)';
       node.style.width = (o.w || 64) + 'px';

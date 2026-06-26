@@ -1,0 +1,149 @@
+{
+  "lesson_id": "0001_two_sum_story",
+  "problem_id": "0001_two_sum",
+  "title": "Two Sum: 用哈希表记住见过的数",
+  "objects": [
+    {
+      "id": "input:nums",
+      "type": "input_array",
+      "label": "nums",
+      "value": [2, 7, 11, 15]
+    },
+    {
+      "id": "input:target",
+      "type": "input_value",
+      "label": "target",
+      "value": 9
+    },
+    {
+      "id": "concept:seen",
+      "type": "definition",
+      "label": "seen（哈希表）",
+      "body": "保存已见过的数字\n和它的下标",
+      "data_structure": "hash_map"
+    },
+    {
+      "id": "rule:seen_entry",
+      "type": "rule",
+      "formula": "seen[number] = index",
+      "applies_to": "concept:seen"
+    },
+    {
+      "id": "rule:need",
+      "type": "rule",
+      "formula": "need = target - current",
+      "inputs": ["input:target", "var:current"],
+      "output": "var:need"
+    },
+    {
+      "id": "var:current",
+      "type": "variable",
+      "label": "current"
+    },
+    {
+      "id": "var:need",
+      "type": "variable",
+      "label": "need"
+    },
+    {
+      "id": "answer",
+      "type": "answer",
+      "label": "return [?, ?]"
+    }
+  ],
+  "frames": [
+    {
+      "id": "define_inputs",
+      "goal": "输入出现",
+      "caption": "nums = [2, 7, 11, 15]，target = 9。先让输入变成可以观察的对象。",
+      "actions": [
+        {"action": "appear", "object": "input:nums"},
+        {"action": "appear", "object": "input:target"}
+      ]
+    },
+    {
+      "id": "define_goal",
+      "goal": "目标定义",
+      "caption": "找到两个下标 i, j，使 nums[i] + nums[j] = target。返回的是下标，不是数字本身。",
+      "actions": [
+        {"action": "appear", "object": "answer"}
+      ]
+    },
+    {
+      "id": "define_hash_map",
+      "goal": "定义哈希表 seen",
+      "caption": "定义一个哈希表 seen，记录每个见过的数字和它的位置。规则：seen[number] = index。",
+      "actions": [
+        {"action": "appear", "object": "concept:seen"},
+        {"action": "appear", "object": "rule:seen_entry"}
+      ]
+    },
+    {
+      "id": "define_complement_rule",
+      "goal": "补数规则",
+      "caption": "当前数是 current，要找的补数是 need = target - current。如果 seen 里有 need，就找到了。",
+      "actions": [
+        {"action": "appear", "object": "rule:need"}
+      ]
+    },
+    {
+      "id": "read_nums0",
+      "goal": "读取 nums[0] = 2",
+      "caption": "读取 nums[0] = 2。套用补数公式：need = 9 - 2 = 7。",
+      "trace_ref": {"event_type": "array_read", "step": 1},
+      "actions": [
+        {"action": "appear", "object": "var:current"},
+        {"action": "appear", "object": "var:need"},
+        {"action": "highlight", "object": "input:nums", "index": 0},
+        {"action": "copy", "from": "input:nums[0]", "to": "var:current"},
+        {"action": "derive", "rule": "rule:need", "result": "var:need"}
+      ]
+    },
+    {
+      "id": "check_map_fail_0",
+      "goal": "查 seen[7]，失败",
+      "caption": "need = 7，查哈希表：seen[7] 不存在。还找不到答案，继续。",
+      "actions": [
+        {"action": "compare", "object": "var:need", "against": "concept:seen", "result": "miss"}
+      ]
+    },
+    {
+      "id": "store_nums0",
+      "goal": "把 2 存入 seen",
+      "caption": "按规则 seen[number] = index，执行 seen[2] = 0，把 2→0 存入哈希表。",
+      "actions": [
+        {"action": "transform", "from": "input:nums[0]", "to": "map_entry:2_to_0"},
+        {"action": "apply_rule", "rule": "rule:seen_entry"},
+        {"action": "insert_into", "object": "map_entry:2_to_0", "container": "concept:seen"}
+      ]
+    },
+    {
+      "id": "read_nums1",
+      "goal": "读取 nums[1] = 7",
+      "caption": "读取 nums[1] = 7。套用补数公式：need = 9 - 7 = 2。",
+      "trace_ref": {"event_type": "array_read", "step": 4},
+      "actions": [
+        {"action": "highlight", "object": "input:nums", "index": 1},
+        {"action": "copy", "from": "input:nums[1]", "to": "var:current"},
+        {"action": "derive", "rule": "rule:need", "result": "var:need"}
+      ]
+    },
+    {
+      "id": "check_map_success",
+      "goal": "查 seen[2]，命中！",
+      "caption": "need = 2，查哈希表：seen[2] = 0，找到了！nums[0]=2 和 nums[1]=7 的和等于 9。",
+      "actions": [
+        {"action": "compare", "object": "var:need", "against": "concept:seen", "result": "hit"},
+        {"action": "connect", "from": "var:need", "to": "map_entry:2_to_0"}
+      ]
+    },
+    {
+      "id": "return_answer",
+      "goal": "返回 [0, 1]",
+      "caption": "返回下标 [0, 1]。nums[0]=2 和 nums[1]=7，它们的和 2+7=9 等于 target。",
+      "actions": [
+        {"action": "return", "object": "answer", "value": [0, 1]}
+      ]
+    }
+  ]
+}

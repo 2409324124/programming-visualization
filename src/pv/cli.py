@@ -334,6 +334,54 @@ def cmd_render_story(args: argparse.Namespace) -> None:
         print(html_output)
 
 
+# ── subcommand: render-lesson ──────────────────────────────────────────
+
+
+def cmd_render_lesson(args: argparse.Namespace) -> None:
+    """Execute the 'render-lesson' subcommand.
+
+    Compiles a ``lesson.story.json`` through the lesson-script pipeline::
+
+        lesson.story.json
+              ↓  story_compiler.compile_lesson()
+        frames[]
+              ↓  render_story_html.render_story_to_html()
+        HTML animation
+
+    This is the recommended path going forward.  Unlike ``render-story``,
+    it does **not** depend on a trace file.
+    """
+    lesson_path = args.lesson_json_path
+
+    if not os.path.isfile(lesson_path):
+        print(f"错误: lesson 文件不存在: {lesson_path}", file=sys.stderr)
+        sys.exit(1)
+
+    try:
+        from pv.story_compiler import compile_lesson_file
+        from pv.render_story_html import render_story_to_html
+    except ImportError as exc:
+        print(f"错误: story_compiler 模块加载失败: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+    try:
+        frames, title = compile_lesson_file(lesson_path)
+    except (ValueError, KeyError, json.JSONDecodeError) as exc:
+        print(f"错误: 无法编译 lesson 文件: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+    html_output = render_story_to_html(frames, title=f"{title} — 概念动画")
+
+    output_path = args.output
+    if output_path:
+        os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write(html_output)
+        print(f"HTML 已写入: {output_path}")
+    else:
+        print(html_output)
+
+
 # ── main ───────────────────────────────────────────────────────────────
 
 
@@ -368,9 +416,17 @@ def main():
     render_html_parser.add_argument("--output", "-o", help="输出 HTML 文件路径（不指定则打印到 stdout）")
 
     # render-story subcommand
-    render_story_parser = subparsers.add_parser("render-story", help="渲染 trace JSON 为故事动画 HTML")
+    render_story_parser = subparsers.add_parser("render-story", help="渲染 trace JSON 为故事动画 HTML（旧路径，依赖 trace）")
     render_story_parser.add_argument("trace_json_path", help="trace JSON 文件路径")
     render_story_parser.add_argument("--output", "-o", help="输出 HTML 文件路径（不指定则打印到 stdout）")
+
+    # render-lesson subcommand
+    render_lesson_parser = subparsers.add_parser(
+        "render-lesson",
+        help="编译 lesson.story.json 为概念动画 HTML（新路径，教学脚本驱动）",
+    )
+    render_lesson_parser.add_argument("lesson_json_path", help="lesson.story.json 文件路径")
+    render_lesson_parser.add_argument("--output", "-o", help="输出 HTML 文件路径（不指定则打印到 stdout）")
 
     args = parser.parse_args()
 
@@ -382,5 +438,7 @@ def main():
         cmd_render_html(args)
     elif args.command == "render-story":
         cmd_render_story(args)
+    elif args.command == "render-lesson":
+        cmd_render_lesson(args)
     else:
         parser.print_help()
