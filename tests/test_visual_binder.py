@@ -215,9 +215,9 @@ class TestBindLesson(unittest.TestCase):
         mismatch) should succeed and the bound input:nums value should be [3,2,4]."""
         runtime = _load_runtime(1)
         lesson  = _load_lesson()
-        # Remove any hardcoded 'value' from input:nums so binder just injects runtime value
+        # Remove any hardcoded 'value' from input objects so binder just injects runtime values
         for obj in lesson["objects"]:
-            if obj["id"] == "input:nums" and "value" in obj:
+            if obj["id"] in ("input:nums", "input:target") and "value" in obj:
                 del obj["value"]
         bound = bind_lesson(lesson, runtime)
         for obj in bound["objects"]:
