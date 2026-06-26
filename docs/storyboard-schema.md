@@ -8,10 +8,10 @@
 ## Pipeline Position
 
 ```text
-lesson.story.json        ← this document defines the format
-      ↓  story_compiler.py
-frames[]
-      ↓  render_story_html.py
+lesson.story.json                   ← authored, not trace-derived
+      ↓  story_compiler.compile_lesson()
+frames[]  (positioned, auto-layout)  ← x/y/w/h computed from object type
+      ↓  render_story_html.render_story_to_html()
 HTML animation
 ```
 
@@ -217,7 +217,8 @@ Array element references use bracket notation: `"input:nums[0]"` (only in `from`
 
 ## Auto-Layout Zones
 
-The story compiler auto-positions objects based on type. No pixel coordinates in the lesson file.
+The story compiler auto-positions objects based on type using zone-based layout constants.
+The `lesson.story.json` file contains no pixel coordinates — positions are computed by the compiler.
 
 ```text
 Stage (960 × 520):

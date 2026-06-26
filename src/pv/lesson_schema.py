@@ -5,7 +5,7 @@ A lesson script is the Layer 2 input to the story animation pipeline::
 
     lesson.story.json          ← authored by a teacher / LLM
           ↓  story_compiler.py
-    frames[]                   ← semantic frames, no pixel coords
+    frames[]                   ← positioned frames (auto-layout by object type)
           ↓  render_story_html.py
     HTML animation
 
@@ -93,6 +93,68 @@ ACTION_TYPES: frozenset[str] = frozenset(
     }
 )
 
+# ── Per-action reference fields ───────────────────────────────────────
+# Maps action type → tuple of field names whose values are object-id references.
+# Fields not listed here are not reference-checked.
+# Notes:
+#   * "to" in transform/connect may be a runtime-created map_entry id → skipped
+#     by _check_ref when the value starts with "map_entry:".
+#   * "object" in insert_into may also be a runtime map_entry id.
+_ACTION_REF_FIELDS: dict[str, tuple[str, ...]] = {
+    "appear":      ("object",),
+    "disappear":   ("object",),
+    "highlight":   ("object",),
+    "copy":        ("from", "to"),
+    "derive":      ("rule", "result"),
+    "compare":     ("object", "against"),
+    "transform":   ("from",),        # "to" is runtime-created (map_entry:)
+    "apply_rule":  ("rule",),
+    "insert_into": ("object", "container"),
+    "connect":     ("from",),        # "to" may be runtime-created (map_entry:)
+    "return":      ("object",),
+    # Declared-but-unimplemented actions:
+    "move":        ("object",),
+    "group":       (),
+    "ungroup":     (),
+    "disconnect":  (),
+    "choose":      (),
+}
+
+
+# ── Reference checker ────────────────────────────────────────────────
+
+
+def _check_ref(ref: str, obj_ids: set[str], context: str) -> str | None:
+    """Return an error string if *ref* cannot be resolved, else ``None``.
+
+    Rules
+    -----
+    * Empty / missing references are silently skipped.
+    * References starting with ``map_entry:`` are runtime-created by the
+      compiler (``transform`` action) and cannot be statically validated.
+    * Array-element references like ``"input:nums[0]"`` are valid when the
+      base object ``"input:nums"`` is declared.
+    * All other references must match a declared object id.
+    """
+    if not ref:
+        return None
+    # Runtime-created object – cannot validate statically
+    if ref.startswith("map_entry:"):
+        return None
+    # Array-element reference: "input:nums[0]" → check base "input:nums"
+    if "[" in ref and ref.endswith("]"):
+        base = ref.split("[")[0]
+        if base not in obj_ids:
+            return (
+                f"{context}: base object '{base}' not declared"
+                f" (in array reference '{ref}')"
+            )
+        return None
+    # Plain reference: must be a declared object id
+    if ref not in obj_ids:
+        return f"{context}: '{ref}' not declared in objects"
+    return None
+
 
 # ── Validation ────────────────────────────────────────────────────────
 
@@ -100,8 +162,14 @@ ACTION_TYPES: frozenset[str] = frozenset(
 def validate_lesson(lesson: dict) -> list[str]:
     """Return a list of validation error strings, or ``[]`` if the lesson is valid.
 
-    This is a lightweight structural check. It does **not** type-check values
-    or resolve object references across frames.
+    Checks performed
+    ----------------
+    1. Required top-level fields present.
+    2. Every object has an ``id`` and a known ``type``; no duplicate ids.
+    3. Every frame has an ``id``; no duplicate frame ids.
+    4. Every action uses a known action type.
+    5. Object-reference fields in each action resolve to declared object ids
+       (with special handling for array-element refs and runtime map_entry ids).
 
     Parameters
     ----------
@@ -137,7 +205,7 @@ def validate_lesson(lesson: dict) -> list[str]:
                 f" (expected one of {sorted(OBJECT_TYPES)})"
             )
 
-    # Validate frames
+    # Validate frames and their actions
     frame_ids: set[str] = set()
     for frame in lesson.get("frames", []):
         frame_id = frame.get("id")
@@ -155,5 +223,16 @@ def validate_lesson(lesson: dict) -> list[str]:
                     f"unknown action {act!r} in frame {frame_id!r}"
                     f" (expected one of {sorted(ACTION_TYPES)})"
                 )
+                continue  # skip reference checks for unknown action
+
+            # Check object-reference fields declared for this action type
+            for field in _ACTION_REF_FIELDS.get(act, ()):
+                ref = action.get(field, "")
+                err = _check_ref(
+                    ref, obj_ids,
+                    context=f"frame '{frame_id}' action '{act}' field '{field}'",
+                )
+                if err:
+                    errors.append(err)
 
     return errors

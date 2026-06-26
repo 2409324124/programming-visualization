@@ -5,7 +5,7 @@ Pipeline (Layer 2 → Layer 3)::
 
     lesson.story.json
           ↓  compile_lesson(lesson) → [frame, ...]
-    frames[]
+    frames[]                      (positioned, auto-layout by object type)
           ↓  render_story_to_html(frames)
     HTML animation
 
@@ -146,7 +146,8 @@ class _Compiler:
 
     def _apply(self, action: dict) -> None:
         act = action.get("action", "")
-        {
+        dispatch: dict[str, Any] = {
+            # Fully implemented:
             "appear":      self._appear,
             "disappear":   self._disappear,
             "highlight":   self._highlight,
@@ -158,7 +159,29 @@ class _Compiler:
             "insert_into": self._insert_into,
             "connect":     self._connect,
             "return":      self._do_return,
-        }.get(act, lambda _: None)(action)
+            # Declared in lesson schema but not yet implemented:
+            "move":        self._not_implemented,
+            "group":       self._not_implemented,
+            "ungroup":     self._not_implemented,
+            "disconnect":  self._not_implemented,
+            "choose":      self._not_implemented,
+        }
+        handler = dispatch.get(act)
+        if handler is None:
+            raise ValueError(
+                f"Unknown action {act!r} reached the compiler. "
+                f"Known actions: {sorted(dispatch)}. "
+                f"Lesson should have been rejected by validate_lesson()."
+            )
+        handler(action)
+
+    def _not_implemented(self, action: dict) -> None:
+        """Raise NotImplementedError for actions declared in the schema but not yet compiled."""
+        act = action.get("action", "")
+        raise NotImplementedError(
+            f"Action {act!r} is declared in ACTION_TYPES but not yet implemented "
+            f"in story_compiler. Add a _act_{act}() method to support it."
+        )
 
     # ── appear ────────────────────────────────────────────────────────
 
@@ -520,6 +543,9 @@ def _mk_label(obj_id: str, text: str, x: int, y: int) -> dict:
 def compile_lesson(lesson: dict) -> list[dict]:
     """Compile a lesson script into animation frames.
 
+    Calls :func:`~pv.lesson_schema.validate_lesson` first and raises
+    :exc:`ValueError` if the lesson has any structural or reference errors.
+
     Parameters
     ----------
     lesson:
@@ -528,9 +554,24 @@ def compile_lesson(lesson: dict) -> list[dict]:
     Returns
     -------
     list[dict]
-        Animation frames compatible with
+        Positioned animation frames compatible with
         ``render_story_html.render_story_to_html()``.
+
+    Raises
+    ------
+    ValueError
+        If ``validate_lesson`` reports one or more errors.
+    NotImplementedError
+        If the lesson references a declared-but-unimplemented action
+        (e.g. ``move``, ``group``, ``choose``).
     """
+    from pv.lesson_schema import validate_lesson
+    errors = validate_lesson(lesson)
+    if errors:
+        raise ValueError(
+            "Invalid lesson script:\n"
+            + "\n".join(f"  \u2022 {e}" for e in errors)
+        )
     return _Compiler(lesson).compile()
 
 

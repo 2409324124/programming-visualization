@@ -333,5 +333,230 @@ class TestStoryCompiler(unittest.TestCase):
                     f"Object {o['id']} extends beyond stage width")
 
 
+class TestHardening(unittest.TestCase):
+    """Hardening tests: validate-on-compile, error propagation, unknown actions."""
+
+    # ── helpers ──────────────────────────────────────────────────────
+
+    def _minimal(self, **overrides) -> dict:
+        """Return a minimal valid lesson, with optional field overrides."""
+        base: dict = {
+            "lesson_id":  "test_lesson",
+            "problem_id": "0001_two_sum",
+            "title":      "Test",
+            "objects":    [{"id": "input:nums", "type": "input_array", "value": [1, 2]}],
+            "frames":     [],
+        }
+        base.update(overrides)
+        return base
+
+    def _lesson_with_action(self, action: dict, extra_objects: list | None = None) -> dict:
+        """Return a minimal lesson containing a single frame with *action*."""
+        objects = [{"id": "input:nums", "type": "input_array", "value": [1, 2]}]
+        if extra_objects:
+            objects.extend(extra_objects)
+        return {
+            "lesson_id":  "test_lesson",
+            "problem_id": "0001_two_sum",
+            "title":      "Test",
+            "objects":    objects,
+            "frames":     [{"id": "f1", "actions": [action]}],
+        }
+
+    # ── compile_lesson raises on invalid lessons ──────────────────────
+
+    def test_compile_raises_valueerror_on_missing_required_fields(self):
+        """compile_lesson must reject a lesson missing required top-level fields."""
+        with self.assertRaises(ValueError) as ctx:
+            compile_lesson({"lesson_id": "x"})
+        msg = str(ctx.exception)
+        self.assertIn("Invalid lesson script", msg)
+        self.assertIn("missing required field", msg)
+
+    def test_compile_raises_valueerror_on_unknown_object_type(self):
+        """compile_lesson must reject objects with an unknown type."""
+        lesson = self._minimal(
+            objects=[{"id": "foo", "type": "alien_type"}]
+        )
+        with self.assertRaises(ValueError) as ctx:
+            compile_lesson(lesson)
+        self.assertIn("unknown object type", str(ctx.exception).lower())
+
+    def test_compile_raises_valueerror_on_unknown_action(self):
+        """compile_lesson must reject actions not in ACTION_TYPES."""
+        lesson = self._lesson_with_action({"action": "fly_away", "object": "input:nums"})
+        with self.assertRaises(ValueError) as ctx:
+            compile_lesson(lesson)
+        self.assertIn("unknown action", str(ctx.exception).lower())
+
+    def test_compile_raises_valueerror_on_undeclared_object_ref(self):
+        """compile_lesson must reject an action referencing an undeclared object."""
+        lesson = self._lesson_with_action({"action": "appear", "object": "nonexistent:obj"})
+        with self.assertRaises(ValueError) as ctx:
+            compile_lesson(lesson)
+        msg = str(ctx.exception)
+        self.assertTrue(
+            "nonexistent:obj" in msg or "not declared" in msg,
+            f"Expected error about undeclared ref; got: {msg}",
+        )
+
+    def test_compile_raises_valueerror_on_array_ref_typo(self):
+        """compile_lesson must reject array refs whose base object is not declared."""
+        lesson = self._lesson_with_action(
+            {"action": "copy", "from": "input:nums999[0]", "to": "input:nums"}
+        )
+        with self.assertRaises(ValueError) as ctx:
+            compile_lesson(lesson)
+        self.assertIn("nums999", str(ctx.exception))
+
+    def test_compile_raises_valueerror_on_bad_rule_ref(self):
+        """derive action referencing a non-existent rule should fail validation."""
+        lesson = self._lesson_with_action(
+            {"action": "derive", "rule": "rule:nonexistent", "result": "input:nums"}
+        )
+        with self.assertRaises(ValueError) as ctx:
+            compile_lesson(lesson)
+        msg = str(ctx.exception)
+        self.assertTrue(
+            "rule:nonexistent" in msg or "not declared" in msg,
+            f"Expected error about undeclared rule; got: {msg}",
+        )
+
+    # ── validate_lesson returns errors (not raises) ───────────────────
+
+    def test_validate_returns_error_on_undeclared_object_ref(self):
+        """validate_lesson should return (not raise) an error for bad object refs."""
+        lesson = self._lesson_with_action({"action": "appear", "object": "missing:obj"})
+        errors = validate_lesson(lesson)
+        self.assertGreater(len(errors), 0)
+        self.assertTrue(
+            any("missing:obj" in e or "not declared" in e for e in errors),
+            f"Expected undeclared ref error; got: {errors}",
+        )
+
+    def test_validate_returns_error_on_array_ref_typo(self):
+        """validate_lesson should catch array refs with an undeclared base object."""
+        lesson = self._lesson_with_action(
+            {"action": "copy", "from": "input:nums999[0]", "to": "input:nums"}
+        )
+        errors = validate_lesson(lesson)
+        self.assertTrue(
+            any("nums999" in e for e in errors),
+            f"Expected error mentioning 'nums999'; got: {errors}",
+        )
+
+    def test_validate_valid_array_ref_passes(self):
+        """input:nums[0] should be valid when input:nums is declared."""
+        lesson = self._lesson_with_action(
+            {
+                "action": "copy",
+                "from":   "input:nums[0]",
+                "to":     "input:nums",  # reusing as target for simplicity
+            }
+        )
+        errors = validate_lesson(lesson)
+        ref_errors = [e for e in errors if "nums" in e and "not declared" in e]
+        self.assertEqual(ref_errors, [], f"Valid array ref should not produce errors; got: {errors}")
+
+    def test_validate_map_entry_ref_skipped(self):
+        """map_entry: prefixed references should not cause validation errors."""
+        lesson = self._lesson_with_action(
+            {"action": "insert_into", "object": "map_entry:2_to_0", "container": "input:nums"}
+        )
+        errors = validate_lesson(lesson)
+        # map_entry:2_to_0 should not produce a "not declared" error
+        map_errors = [e for e in errors if "map_entry:2_to_0" in e]
+        self.assertEqual(map_errors, [], f"map_entry ref should be skipped; got: {errors}")
+
+    # ── NotImplementedError for declared-but-unimplemented actions ────
+
+    def test_unimplemented_move_raises_not_implemented_error(self):
+        """'move' is in ACTION_TYPES but not implemented → NotImplementedError at compile time."""
+        lesson = self._lesson_with_action({"action": "move", "object": "input:nums"})
+        # validate_lesson should PASS (move is in ACTION_TYPES)
+        errors = validate_lesson(lesson)
+        self.assertEqual(errors, [], f"'move' should be a valid action type; got: {errors}")
+        # compile_lesson should raise NotImplementedError
+        with self.assertRaises(NotImplementedError) as ctx:
+            compile_lesson(lesson)
+        self.assertIn("move", str(ctx.exception))
+
+    def test_unimplemented_group_raises_not_implemented_error(self):
+        lesson = self._minimal(frames=[{"id": "f1", "actions": [{"action": "group"}]}])
+        with self.assertRaises(NotImplementedError):
+            compile_lesson(lesson)
+
+    def test_unimplemented_choose_raises_not_implemented_error(self):
+        lesson = self._minimal(frames=[{"id": "f1", "actions": [{"action": "choose"}]}])
+        with self.assertRaises(NotImplementedError):
+            compile_lesson(lesson)
+
+    # ── compile_lesson_file integration ──────────────────────────────
+
+    def test_compile_lesson_file_raises_on_invalid_json_structure(self):
+        """compile_lesson_file should propagate ValueError for invalid lessons."""
+        import tempfile, json, os
+        bad_lesson = {"lesson_id": "bad"}  # missing required fields
+        with tempfile.NamedTemporaryFile(
+            mode="w", suffix=".json", delete=False, encoding="utf-8"
+        ) as f:
+            json.dump(bad_lesson, f)
+            tmp_path = f.name
+        try:
+            with self.assertRaises(ValueError):
+                compile_lesson_file(tmp_path)
+        finally:
+            os.unlink(tmp_path)
+
+    # ── valid Two Sum lesson still compiles ───────────────────────────
+
+    def test_valid_two_sum_lesson_still_compiles_after_hardening(self):
+        """The production lesson.story.json must continue to compile without errors."""
+        frames, title = compile_lesson_file(LESSON_PATH)
+        self.assertIsInstance(frames, list)
+        self.assertGreater(len(frames), 0)
+        self.assertIsInstance(title, str)
+        self.assertGreater(len(title), 0)
+
+    def test_valid_two_sum_lesson_has_no_validation_errors(self):
+        """validate_lesson() must return [] for the production lesson."""
+        import json
+        with open(LESSON_PATH, encoding="utf-8") as f:
+            lesson = json.load(f)
+        errors = validate_lesson(lesson)
+        self.assertEqual(errors, [], f"Production lesson should be valid; got: {errors}")
+
+    # ── CLI render-lesson integration ─────────────────────────────────
+
+    def test_cli_render_lesson_produces_valid_html(self):
+        """compile_lesson_file + render_story_to_html should return a complete HTML page."""
+        from pv.render_story_html import render_story_to_html
+        frames, title = compile_lesson_file(LESSON_PATH)
+        html = render_story_to_html(frames, title=title)
+        self.assertIn("<!DOCTYPE html>", html)
+        self.assertIn("FRAMES", html)
+        # Must not contain CDN <link> or <script src="http..."> tags
+        self.assertNotIn("<link rel", html, "HTML must not contain external CDN links")
+        self.assertNotIn('src="http', html, "HTML must not load external scripts")
+
+    def test_cli_render_lesson_error_message_on_bad_lesson(self):
+        """Simulates what the CLI does: compiling a bad lesson should produce a readable error."""
+        bad_lesson = {"lesson_id": "x", "problem_id": "y", "title": "t",
+                      "objects": [], "frames": []}
+        # Empty frames/objects is valid structurally, but let's use a bad action ref
+        bad_lesson["frames"] = [{"id": "f1", "actions": [
+            {"action": "appear", "object": "does_not_exist"}
+        ]}]
+        try:
+            compile_lesson(bad_lesson)
+            self.fail("Expected ValueError")
+        except ValueError as exc:
+            msg = str(exc)
+            self.assertIn("Invalid lesson script", msg)
+            # Error message should be human-readable (bullet points)
+            self.assertIn("•", msg)
+
+
 if __name__ == "__main__":
     unittest.main()
+
