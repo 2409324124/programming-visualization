@@ -278,7 +278,7 @@ def run_case(
             "expected": expected,
             "actual": None,
             "message": f"代码运行时出错：{type(exc).__name__}: {exc}",
-            "error": str(exc),
+            "error": f"{type(exc).__name__}: {exc}",
             "trace_path": trace_path,
             "step_count": trace.step_count if trace else 0,
             "truncated": trace._truncated if trace else False,

@@ -11,6 +11,15 @@
 
 > 本地查看：打开 `examples/index.html`。
 
+## Viewer Paths
+
+| Command | Purpose | Example |
+|---------|---------|---------|
+| `render-code` | 用户代码执行过程 | `pv render-code problems/0001_two_sum --case-index 0` |
+| `render-visual` | 官方概念可视化 | `pv render-visual problems/0001_two_sum --case-index 0` |
+| `render-html` | trace viewer | `pv render-html trace.json` |
+| `render-story` | legacy storyboard | `pv render-story trace.json` |
+
 目标不是复制 LeetCode，也不是再做一个题解站，而是把经典 `class Solution` 的执行过程变成可理解的可视化故事：
 
 - 双指针如何移动；
@@ -52,6 +61,9 @@ uv run python -m pv render-html problems/0070_climbing_stairs/trace.sample.json 
 
 # 8. 生成故事动画 (Two Sum)
 uv run python -m pv render-story problems/0001_two_sum/trace.sample.json --output examples/story_0001_two_sum.case0.html
+
+# 9. 查看自己代码的执行过程
+uv run python -m pv render-code problems/0001_two_sum --case-index 0 --output examples/code_0001_two_sum.case0.html
 ```
 
 > 如果不使用 uv，可以用标准 venv：`python3 -m venv .venv && source .venv/bin/activate && pip install -e .`，之后不需要 `uv run` 前缀。

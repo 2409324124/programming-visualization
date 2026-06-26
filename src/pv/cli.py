@@ -506,6 +506,41 @@ def cmd_render_visual(args: argparse.Namespace) -> None:
         print(html_output)
 
 
+def cmd_render_code(args: argparse.Namespace) -> None:
+    problem_dir = args.problem_path
+    if not os.path.isdir(problem_dir):
+        print(f"错误: 题目目录不存在: {problem_dir}", file=sys.stderr)
+        sys.exit(1)
+    
+    solution_path = args.solution or os.path.join(problem_dir, "solution.py")
+    if not os.path.isfile(solution_path):
+        print(f"错误: solution 文件不存在: {solution_path}", file=sys.stderr)
+        sys.exit(1)
+    
+    try:
+        from pv.learner_runtime import get_learner_runtime
+        from pv.render_learner_html import render_learner_to_html
+    except ImportError as e:
+        print(f"错误: 模块未实现: {e}", file=sys.stderr)
+        sys.exit(1)
+    
+    try:
+        runtime = get_learner_runtime(problem_dir, solution_path, args.case_index)
+    except Exception as e:
+        print(f"错误: 运行失败: {e}", file=sys.stderr)
+        sys.exit(1)
+    
+    html = render_learner_to_html(runtime)
+    
+    if args.output:
+        os.makedirs(os.path.dirname(args.output) or ".", exist_ok=True)
+        with open(args.output, "w", encoding="utf-8") as f:
+            f.write(html)
+        print(f"HTML 已写入: {args.output}")
+    else:
+        print(html)
+
+
 def main():
     parser = argparse.ArgumentParser(prog="pv", description="编程可视化学习器")
     subparsers = parser.add_subparsers(dest="command")
@@ -549,6 +584,13 @@ def main():
     render_lesson_parser.add_argument("lesson_json_path", help="lesson.story.json 文件路径")
     render_lesson_parser.add_argument("--output", "-o", help="输出 HTML 文件路径（不指定则打印到 stdout）")
 
+    # render-code subcommand
+    render_code_parser = subparsers.add_parser("render-code", help="渲染用户代码执行过程为 HTML")
+    render_code_parser.add_argument("problem_path", help="题目目录路径")
+    render_code_parser.add_argument("--solution", help="用户 solution.py 路径（默认使用 problem_dir/solution.py）")
+    render_code_parser.add_argument("--case-index", type=int, default=0, help="用例索引（默认 0）")
+    render_code_parser.add_argument("--output", "-o", help="输出 HTML 文件路径")
+
     # render-visual subcommand (new primary path)
     render_visual_parser = subparsers.add_parser(
         "render-visual",
@@ -576,5 +618,7 @@ def main():
         cmd_render_lesson(args)
     elif args.command == "render-visual":
         cmd_render_visual(args)
+    elif args.command == "render-code":
+        cmd_render_code(args)
     else:
         parser.print_help()

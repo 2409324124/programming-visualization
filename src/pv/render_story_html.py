@@ -217,6 +217,7 @@ TEMPLATE = """\
 </head>
 <body>
   <div id="app">
+    <a href="index.html" style="color:#42a5f5;text-decoration:none;font-size:.85rem">← Demo Gallery</a>
     <h1>{title}</h1>
 {runtime_banner}
     <div id="stage">
