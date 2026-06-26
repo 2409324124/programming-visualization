@@ -334,7 +334,176 @@ def cmd_render_story(args: argparse.Namespace) -> None:
         print(html_output)
 
 
-# ── main ───────────────────────────────────────────────────────────────
+# ── subcommand: render-lesson ──────────────────────────────────────────
+
+
+def cmd_render_lesson(args: argparse.Namespace) -> None:
+    """Execute the 'render-lesson' subcommand.
+
+    Compiles a ``lesson.story.json`` through the lesson-script pipeline::
+
+        lesson.story.json
+              ↓  story_compiler.compile_lesson()
+        frames[]
+              ↓  render_story_html.render_story_to_html()
+        HTML animation
+
+    This is the recommended path going forward.  Unlike ``render-story``,
+    it does **not** depend on a trace file.
+    """
+    lesson_path = args.lesson_json_path
+
+    if not os.path.isfile(lesson_path):
+        print(f"错误: lesson 文件不存在: {lesson_path}", file=sys.stderr)
+        sys.exit(1)
+
+    try:
+        from pv.story_compiler import compile_lesson_file
+        from pv.render_story_html import render_story_to_html
+    except ImportError as exc:
+        print(f"错误: story_compiler 模块加载失败: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+    try:
+        frames, title = compile_lesson_file(lesson_path)
+    except (ValueError, KeyError, json.JSONDecodeError) as exc:
+        print(f"错误: 无法编译 lesson 文件: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+    html_output = render_story_to_html(frames, title=f"{title} — 概念动画")
+
+    output_path = args.output
+    if output_path:
+        os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write(html_output)
+        print(f"HTML 已写入: {output_path}")
+    else:
+        print(html_output)
+
+
+# ── subcommand: render-visual ────────────────────────────────────────
+
+
+def cmd_render_visual(args: argparse.Namespace) -> None:
+    """Execute the 'render-visual' subcommand.
+
+    Pipeline::
+
+        problem_dir + case_index
+              ↓  visual_runtime.get_runtime_context()
+        RuntimeContext
+              ↓  visual_binder.bind_lesson()
+        BoundLesson
+              ↓  visual_compiler.compile_visual()
+        frames[]
+              ↓  render_story_html.render_visual_to_html()
+        HTML
+
+    All values in the generated HTML come from the real harness execution.
+    """
+    problem_dir = args.problem_dir
+    case_index  = int(args.case_index)
+    lesson_path = args.lesson
+    output_path = args.output
+
+    if not os.path.isdir(problem_dir):
+        print(f"错误: 题目目录不存在: {problem_dir}", file=sys.stderr)
+        sys.exit(1)
+    if not os.path.isfile(lesson_path):
+        print(f"错误: lesson 文件不存在: {lesson_path}", file=sys.stderr)
+        sys.exit(1)
+
+    # Step 1: run harness
+    try:
+        from pv.visual_runtime import get_runtime_context, ValidationOnlyError
+    except ImportError as exc:
+        print(f"错误: visual_runtime 模块加载失败: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+    try:
+        rt_ctx = get_runtime_context(
+            problem_dir=problem_dir,
+            case_index=case_index,
+            solution_mode="visual",
+        )
+    except ValidationOnlyError as exc:
+        print(f"错误: {exc}", file=sys.stderr)
+        print("该题目没有 visual_solution.py，无法生成语义动画。"
+              "使用 render-lesson 查看 authored demo。", file=sys.stderr)
+        sys.exit(1)
+    except (FileNotFoundError, IndexError) as exc:
+        print(f"错误: 运行 harness 失败: {exc}", file=sys.stderr)
+        sys.exit(1)
+    except Exception as exc:
+        print(f"错误: 未预期异常: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+    print(f"\u8fd0行完成: case {case_index} / "
+          f"{'PASSED' if rt_ctx['passed'] else 'FAILED'} / "
+          f"actual={rt_ctx['actual']} / trace events={len(rt_ctx['trace'])}")
+
+    # Step 2: load and validate lesson
+    try:
+        from pv.lesson_schema import validate_lesson
+        from pv.story_compiler import compile_lesson_file as _unused  # noqa: F401
+    except ImportError as exc:
+        print(f"错误: lesson_schema 模块加载失败: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+    with open(lesson_path, encoding="utf-8") as fh:
+        lesson_dict = json.load(fh)
+
+    errors = validate_lesson(lesson_dict)
+    if errors:
+        print(f"错误: lesson 文件校验失败:", file=sys.stderr)
+        for e in errors:
+            print(f"  • {e}", file=sys.stderr)
+        sys.exit(1)
+
+    # Step 3: bind lesson to runtime
+    try:
+        from pv.visual_binder import bind_lesson, BindingError
+    except ImportError as exc:
+        print(f"错误: visual_binder 模块加载失败: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+    try:
+        bound = bind_lesson(lesson_dict, rt_ctx)
+    except BindingError as exc:
+        print(f"错误: lesson 与运行时不一致 (BindingError):", file=sys.stderr)
+        print(f"  {exc}", file=sys.stderr)
+        sys.exit(1)
+
+    print("绑定完成: lesson 与 runtime 一致")
+
+    # Step 4: compile visual frames
+    try:
+        from pv.visual_compiler import compile_visual
+    except ImportError as exc:
+        print(f"错误: visual_compiler 模块加载失败: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+    frames = compile_visual(bound)
+    print(f"编译完成: {len(frames)} 帧")
+
+    # Step 5: render HTML
+    try:
+        from pv.render_story_html import render_visual_to_html
+    except ImportError as exc:
+        print(f"错误: render_story_html 模块加载失败: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+    title = lesson_dict.get("title", "Runtime-bound Visualization")
+    html_output = render_visual_to_html(frames, title=title)
+
+    if output_path:
+        os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
+        with open(output_path, "w", encoding="utf-8") as f:
+            f.write(html_output)
+        print(f"HTML 已写入: {output_path}")
+    else:
+        print(html_output)
 
 
 def main():
@@ -368,9 +537,30 @@ def main():
     render_html_parser.add_argument("--output", "-o", help="输出 HTML 文件路径（不指定则打印到 stdout）")
 
     # render-story subcommand
-    render_story_parser = subparsers.add_parser("render-story", help="渲染 trace JSON 为故事动画 HTML")
+    render_story_parser = subparsers.add_parser("render-story", help="渲染 trace JSON 为故事动画 HTML（旧路径，依赖 trace）")
     render_story_parser.add_argument("trace_json_path", help="trace JSON 文件路径")
     render_story_parser.add_argument("--output", "-o", help="输出 HTML 文件路径（不指定则打印到 stdout）")
+
+    # render-lesson subcommand
+    render_lesson_parser = subparsers.add_parser(
+        "render-lesson",
+        help="编译 lesson.story.json 为概念动画 HTML（authored-only / experimental）",
+    )
+    render_lesson_parser.add_argument("lesson_json_path", help="lesson.story.json 文件路径")
+    render_lesson_parser.add_argument("--output", "-o", help="输出 HTML 文件路径（不指定则打印到 stdout）")
+
+    # render-visual subcommand (new primary path)
+    render_visual_parser = subparsers.add_parser(
+        "render-visual",
+        help="主入口：真实运行 harness + 绑定 lesson 生成可视化 HTML",
+    )
+    render_visual_parser.add_argument("problem_dir", help="题目目录（如 problems/0001_two_sum）")
+    render_visual_parser.add_argument("--case-index", default=0, type=int,
+                                      dest="case_index", help="用例索引（默认 0）")
+    render_visual_parser.add_argument("--lesson", required=True,
+                                      help="lesson.story.json 文件路径")
+    render_visual_parser.add_argument("--output", "-o",
+                                      help="输出 HTML 文件路径（不指定则打印到 stdout）")
 
     args = parser.parse_args()
 
@@ -382,5 +572,9 @@ def main():
         cmd_render_html(args)
     elif args.command == "render-story":
         cmd_render_story(args)
+    elif args.command == "render-lesson":
+        cmd_render_lesson(args)
+    elif args.command == "render-visual":
+        cmd_render_visual(args)
     else:
         parser.print_help()

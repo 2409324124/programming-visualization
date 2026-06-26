@@ -25,7 +25,18 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f2f5;margin:0;
 .st-new{background:#fff3e0;border:2px solid #ff9800;color:#e65100;box-shadow:0 0 0 3px rgba(255,152,0,.2)}
 .st-matched{background:#e8f5e9;border:2px solid #66bb6a;color:#2e7d32;font-weight:700;box-shadow:0 0 0 3px rgba(102,187,106,.25)}
 .st-faded{opacity:0.18;pointer-events:none}
+.st-definition_card{border:2px solid #42a5f5;background:linear-gradient(135deg,#e3f2fd,#bbdefb);color:#0d47a1;border-radius:12px;font-size:.88rem;flex-direction:column;align-items:flex-start;padding:8px 12px;text-align:left;white-space:pre-line}
+.st-definition_card::before{content:'📖 ' attr(data-title);font-weight:700;font-size:.75rem;color:#1565c0;display:block;margin-bottom:4px}
+.st-rule_card{border:2px solid #ab47bc;background:linear-gradient(135deg,#f3e5f5,#e1bee7);color:#4a148c;border-radius:12px;font-size:.85rem;font-family:monospace;font-weight:600;flex-direction:column;align-items:flex-start;padding:6px 12px;text-align:left;white-space:pre-line}
+.st-rule_card::before{content:'📐 ' attr(data-title);font-weight:700;font-size:.72rem;color:#7b1fa2;display:block;margin-bottom:4px}
+.st-operation_card{border:2px solid #ff9800;background:linear-gradient(135deg,#fff3e0,#ffe0b2);color:#e65100;border-radius:10px;font-size:.82rem;font-weight:600;flex-direction:column;align-items:flex-start;padding:6px 12px;text-align:left;white-space:pre-line}
+.st-operation_card::before{content:'▶ ' attr(data-title);font-weight:700;font-size:.72rem;color:#e65100;display:block;margin-bottom:4px}
+.st-note_card{border:1px dashed #bbb;background:#f9f9f9;color:#888;border-radius:8px;font-size:.78rem;flex-direction:column;align-items:flex-start;padding:4px 10px;text-align:left;white-space:pre-line}
+.st-note_card::before{content:'📝 ' attr(data-title);font-weight:600;font-size:.7rem;color:#aaa;display:block;margin-bottom:3px}
 .st-label{background:transparent;border:none;color:#666;font-weight:400;font-size:.85rem}
+.st-definition{border:2px dashed #42a5f5;background:rgba(227,242,253,0.35);color:#0d47a1;border-radius:10px;font-size:.82rem;align-items:flex-start;padding:8px 12px;text-align:left;white-space:pre-line}
+.st-definition::before{content:'📦 ' attr(data-title);font-weight:700;font-size:.73rem;color:#1565c0;display:block;margin-bottom:4px}
+.st-variable_box{border:2px solid #26a69a;background:linear-gradient(135deg,#e0f2f1,#b2dfdb);color:#00695c;border-radius:8px;font-size:.9rem;font-weight:600}
 .st-idx{position:absolute;bottom:-20px;font-size:.7rem;color:#999;text-align:center;left:0;right:0}
 #caption-area{margin-top:1rem;padding:0 .4rem}
 #frame-title{font-size:1.05rem;margin:0 0 .3rem;color:#333}
@@ -35,6 +46,13 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f2f5;margin:0;
 #controls button:hover{background:#f0f0f0}
 #controls button:disabled{opacity:.4;cursor:default;background:#fff}
 #counter{margin-left:auto;color:#999;font-size:.85rem}
+/* Runtime-bound banner ────────────────────────────────────────────── */
+#runtime-banner{display:flex;align-items:center;gap:1rem;margin-bottom:1rem;padding:.55rem 1rem;border-radius:8px;font-size:.82rem;font-weight:600;flex-wrap:wrap}
+#runtime-banner.rb-passed{background:#e8f5e9;border:1.5px solid #66bb6a;color:#2e7d32}
+#runtime-banner.rb-failed{background:#fce4ec;border:1.5px solid #e57373;color:#b71c1c}
+#runtime-banner.rb-error{background:#fff8e1;border:1.5px solid #ffca28;color:#e65100}
+.rb-label{opacity:.7;font-weight:400}
+.rb-chip{background:rgba(0,0,0,.08);border-radius:4px;padding:1px 6px;font-family:monospace;font-size:.8rem}
 """
 
 
@@ -98,6 +116,10 @@ JS = """\
 
       // Update class
       node.className = 'st-obj st-' + (o.state || 'normal');
+      // Set data-title for cards and containers (used by CSS ::before)
+      if (['definition_card','rule_card','operation_card','note_card','definition'].indexOf(o.type) >= 0) {
+          node.setAttribute('data-title', o.title || o.text || '');
+      }
       // Update transform (smooth CSS transition)
       node.style.transform = 'translate(' + (o.x || 0) + 'px,' + (o.y || 0) + 'px)';
       node.style.width = (o.w || 64) + 'px';
@@ -196,7 +218,7 @@ TEMPLATE = """\
 <body>
   <div id="app">
     <h1>{title}</h1>
-
+{runtime_banner}
     <div id="stage">
       <svg id="arrows"></svg>
       <div id="zones">
@@ -228,6 +250,9 @@ TEMPLATE = """\
 
 def render_story_to_html(frames: list[dict], title: str = "Storyboard Demo") -> str:
     """Convert storyboard frames to a self-contained HTML animation page.
+
+    Backward-compatible entry point for authored-only (lesson/storyboard) mode.
+    Frames are displayed without a runtime banner.
 
     Parameters
     ----------
@@ -264,4 +289,110 @@ def render_story_to_html(frames: list[dict], title: str = "Storyboard Demo") -> 
         css=CSS,
         frames_json=frames_json,
         js=JS,
+        runtime_banner="",   # no banner for authored-only mode
     )
+
+
+def render_visual_to_html(frames: list[dict], title: str = "Runtime-bound Visualization") -> str:
+    """Render runtime-bound frames into a self-contained HTML animation page.
+
+    Unlike :func:`render_story_to_html`, this function expects frames that
+    contain a ``runtime_meta`` key (produced by
+    :func:`~pv.visual_compiler.compile_visual`).  A banner is injected into
+    the page showing::
+
+        Runtime-bound visualization  |  Case N  |  Passed: true  |  Actual: [0,1]  |  Expected: [0,1]
+
+    If ``passed`` is ``False`` the banner turns red.  If an execution error
+    occurred the banner turns amber and shows the error message.
+
+    Parameters
+    ----------
+    frames:
+        Frames from :func:`~pv.visual_compiler.compile_visual`.
+    title:
+        Page title.
+
+    Returns
+    -------
+    str
+        Complete self-contained HTML document with runtime banner.
+    """
+    # Extract runtime metadata from the first frame that has it
+    rt_meta: dict = {}
+    for f in frames:
+        if f.get("runtime_meta"):
+            rt_meta = f["runtime_meta"]
+            break
+
+    banner_html = _build_runtime_banner(rt_meta)
+    frames_json = json.dumps(frames, ensure_ascii=False, indent=2)
+    return TEMPLATE.format(
+        title=title,
+        css=CSS,
+        frames_json=frames_json,
+        js=JS,
+        runtime_banner=banner_html,
+    )
+
+
+def _build_runtime_banner(rt_meta: dict) -> str:
+    """Build the HTML for the runtime status banner."""
+    if not rt_meta:
+        return ""
+
+    passed: bool  = rt_meta.get("passed", False)
+    actual        = rt_meta.get("actual")
+    expected      = rt_meta.get("expected")
+    case_index    = rt_meta.get("case_index", 0)
+    case_name     = rt_meta.get("case_name", "")
+    error_msg     = rt_meta.get("error")
+
+    if error_msg:
+        css_class = "rb-error"
+        status_text = "\u26a0\ufe0f Error"
+    elif passed:
+        css_class = "rb-passed"
+        status_text = "\u2705 Passed"
+    else:
+        css_class = "rb-failed"
+        status_text = "\u274c Failed"
+
+    case_label = f"Case {case_index}"
+    if case_name:
+        # truncate long names
+        short = case_name[:40] + "\u2026" if len(case_name) > 40 else case_name
+        case_label += f" \u2014 {short}"
+
+    actual_str   = _fmt_val(actual)
+    expected_str = _fmt_val(expected)
+
+    chips = [
+        ("Runtime-bound visualization", False),
+        (case_label, True),
+        (status_text, False),
+        (f"Actual: {actual_str}", True),
+        (f"Expected: {expected_str}", True),
+    ]
+    if error_msg:
+        short_err = error_msg[:80] + "\u2026" if len(error_msg) > 80 else error_msg
+        chips.append((f"Error: {short_err}", True))
+
+    items = ""
+    for text, is_chip in chips:
+        if is_chip:
+            items += f'<span class="rb-chip">{_esc(text)}</span>\n    '
+        else:
+            items += f'<span>{_esc(text)}</span>\n    '
+
+    return f'\n    <div id="runtime-banner" class="{css_class}">\n    {items.strip()}\n    </div>'
+
+
+def _fmt_val(v) -> str:
+    if v is None:
+        return "None"
+    return str(v)
+
+
+def _esc(s: str) -> str:
+    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")

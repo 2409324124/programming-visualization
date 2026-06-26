@@ -36,6 +36,13 @@ ANSWER_Y = 400
 ANSWER_W = 150
 ANSWER_H = 56
 
+# ── Card layout ───────────────────────────────────────────────────
+CARD_X = 600
+CARD_Y_START = 50
+CARD_GAP = 78
+CARD_W = 280
+CARD_H = 62
+
 
 # ── Object factories ────────────────────────────────────────────────
 
@@ -169,6 +176,62 @@ def _target_badge(target: int) -> dict:
     return {"id": "badge_target", "text": f"target = {target}"}
 
 
+def _definition_card(card_id: str, title: str, body: str, slot: int, state: str = "normal") -> dict:
+    return {
+        "id": card_id,
+        "type": "definition_card",
+        "title": title,
+        "text": body,
+        "x": CARD_X,
+        "y": CARD_Y_START + slot * CARD_GAP,
+        "w": CARD_W,
+        "h": CARD_H,
+        "state": state,
+    }
+
+
+def _rule_card(card_id: str, text: str, slot: int, state: str = "normal") -> dict:
+    return {
+        "id": card_id,
+        "type": "rule_card",
+        "title": "规则",
+        "text": text,
+        "x": CARD_X,
+        "y": CARD_Y_START + slot * CARD_GAP,
+        "w": int(CARD_W * 0.85),
+        "h": CARD_H - 6,
+        "state": state,
+    }
+
+
+def _operation_card(text: str, slot: int, state: str = "active") -> dict:
+    return {
+        "id": "op_card",
+        "type": "operation_card",
+        "title": "操作",
+        "text": text,
+        "x": CARD_X,
+        "y": CARD_Y_START + slot * CARD_GAP,
+        "w": int(CARD_W * 0.9),
+        "h": CARD_H - 6,
+        "state": state,
+    }
+
+
+def _note_card(text: str, slot: int) -> dict:
+    return {
+        "id": "note_card",
+        "type": "note_card",
+        "title": "注意",
+        "text": text,
+        "x": CARD_X + 30,
+        "y": CARD_Y_START + slot * CARD_GAP + 6,
+        "w": CARD_W - 30,
+        "h": CARD_H - 12,
+        "state": "faded",
+    }
+
+
 # ── Main entry point ────────────────────────────────────────────────
 
 def build_storyboard(trace_data: dict) -> list[dict]:
@@ -198,165 +261,197 @@ def build_storyboard(trace_data: dict) -> list[dict]:
 
     frames: list[dict] = []
 
-    # ── Frame 0: input_appear ───────────────────────────────────────
-    frames.append(
-        {
-            "frame_id": "input_appear",
-            "step": 0,
-            "title": "输入数组",
-            "caption": (
-                f"先把输入数组变成可以观察的对象。"
-                f"target = {target}，需要找到两个数和为 {target} 的下标。"
-            ),
-            "objects": [_target_label(target)] + _arr_boxes() + all_index_labels,
-            "arrows": [],
-            "badges": [badge],
-        }
-    )
+    # ── Frame 0: input_appear ─────────────────────────────────────────
+    frames.append({
+        "frame_id": "input_appear",
+        "step": 0,
+        "title": "输入数组",
+        "caption": f"nums = {nums}，target = {target}。先把输入变成可以观察的对象。",
+        "objects": ([_target_label(target)] + _arr_boxes() + all_index_labels),
+        "arrows": [],
+        "badges": [badge],
+    })
 
-    # ── Frame 1: read_nums0 ────────────────────────────────────────
-    # step=1, array_read: read nums[0]
-    e1_before = events[0].get("before") or {}
-    i0 = e1_before.get("i", 0)
-    num0 = e1_before.get("num", nums[0])
+    # ── Frame 1: goal_definition ─────────────────────────────────────
+    frames.append({
+        "frame_id": "goal_definition",
+        "step": 0,
+        "title": "目标定义",
+        "caption": f"找到两个数，使它们的和等于 {target}。",
+        "objects": (
+            [_target_label(target)] + _arr_boxes() + all_index_labels
+            + [_definition_card("card_goal", "目标", f"找到两个数\n使它们的和 = {target}", 0, "active")]
+        ),
+        "arrows": [],
+        "badges": [badge],
+    })
+
+    # ── Frame 2: return_definition ───────────────────────────────────
+    frames.append({
+        "frame_id": "return_definition",
+        "step": 0,
+        "title": "返回值是什么",
+        "caption": "返回的是两个数的下标，不是数字本身。",
+        "objects": (
+            [_target_label(target)] + _arr_boxes() + all_index_labels
+            + [_definition_card("card_goal", "目标", f"找到两个数\n使它们的和 = {target}", 0)]
+            + [_note_card("answer = [index_a, index_b]", 1)]
+        ),
+        "arrows": [],
+        "badges": [badge],
+    })
+
+    # ── Frame 3: hashmap_definition ──────────────────────────────────
+    frames.append({
+        "frame_id": "hashmap_definition",
+        "step": 0,
+        "title": "哈希表定义",
+        "caption": "哈希表保存已经见过的数字，以及它出现的下标。",
+        "objects": (
+            [_target_label(target)] + _arr_boxes() + all_index_labels
+            + [_map_zone_title(), _map_empty_label()]
+            + [_definition_card("card_hash", "哈希表", "保存见过的数字\n和它的下标", 0)]
+            + [_rule_card("card_rule_seen", "seen[number] = index", 1, "new")]
+        ),
+        "arrows": [],
+        "badges": [badge],
+    })
+
+    # ── Frame 4: complement_rule ─────────────────────────────────────
+    frames.append({
+        "frame_id": "complement_rule",
+        "step": 0,
+        "title": "补数规则",
+        "caption": f"如果 current + need = {target}，那么 need 就是我们要找的另一个数。",
+        "objects": (
+            [_target_label(target)] + _arr_boxes() + all_index_labels
+            + [_map_zone_title(), _map_empty_label()]
+            + [_definition_card("card_hash", "哈希表", "保存见过的数字\n和它的下标", 0)]
+            + [_rule_card("card_rule_seen", "seen[number] = index", 1)]
+            + [_rule_card("card_rule_need", f"need = {target} - current", 2, "new")]
+        ),
+        "arrows": [],
+        "badges": [badge],
+    })
+
+    # ── Frame 5: read_nums0 ──────────────────────────────────────────
+    e0 = events[0]
+    i0 = e0["before"].get("i", 0)
+    num0 = nums[i0]
     complement0 = target - num0
+    frames.append({
+        "frame_id": "read_nums0",
+        "step": 1,
+        "title": f"读取 nums[{i0}] = {num0}",
+        "caption": f"当前读取 nums[{i0}] = {num0}。需要补数 = {complement0}。",
+        "objects": (
+            [_target_label(target)] + _arr_boxes({0: "active"}) + all_index_labels
+            + [_complement_box(complement0)]
+            + [_map_zone_title(), _map_empty_label()]
+            + [_definition_card("card_hash", "哈希表", "保存见过的数字\n和它的下标", 0)]
+            + [_rule_card("card_rule_seen", "seen[number] = index", 1)]
+            + [_rule_card("card_rule_need", f"need = {target} - current", 2)]
+            + [_operation_card(f"current = {num0}\nneed = {target} - {num0} = {complement0}", 3)]
+        ),
+        "arrows": [],
+        "badges": [badge],
+    })
 
-    frames.append(
-        {
-            "frame_id": "read_nums0",
-            "step": 1,
-            "title": "读取 nums[0]",
-            "caption": (
-                f"当前读取 nums[{i0}] = {num0}。"
-                f"要满足 target = {target}，需要补数 = {complement0}。"
-            ),
-            "objects": (
-                [_target_label(target)]
-                + _arr_boxes({0: "active"})
-                + all_index_labels
-                + [_complement_box(complement0)]
-            ),
-            "arrows": [],
-            "badges": [badge],
-        }
-    )
+    # ── Frame 6: check_map_fail ──────────────────────────────────────
+    frames.append({
+        "frame_id": "check_map_fail",
+        "step": 2,
+        "title": "查询哈希表",
+        "caption": f"查找 seen[{complement0}]，{complement0} 不存在。还不能返回答案。",
+        "objects": (
+            [_target_label(target)] + _arr_boxes({0: "visited"}) + all_index_labels
+            + [_map_zone_title(), _map_empty_label()]
+            + [_ghost_map_entry(num0, 0, ARRAY_BOX_X_START, ARRAY_BOX_Y, "faded")]
+            + [_definition_card("card_hash", "哈希表", "保存见过的数字\n和它的下标", 0)]
+            + [_rule_card("card_rule_seen", "seen[number] = index", 1)]
+            + [_rule_card("card_rule_need", f"need = {target} - current", 2)]
+            + [_operation_card(f"查找 seen[{complement0}]\n{complement0} 不存在 ✗", 3)]
+        ),
+        "arrows": [],
+        "badges": [badge],
+    })
 
-    # ── Frame 2: check_complement_7 ────────────────────────────────
-    # step=2, hash_map_get: complement not found (map empty)
-    # Ghost map:2 placed at arr:0 position so it can fly to the map zone in frame 3.
-    frames.append(
-        {
-            "frame_id": "check_complement_7",
-            "step": 2,
-            "title": "检查哈希表",
-            "caption": f"补数 {complement0} 不在哈希表中（表为空）。所以不能匹配。",
-            "objects": (
-                [_target_label(target)]
-                + _arr_boxes({0: "visited"})
-                + all_index_labels
-                + [_map_zone_title(), _map_empty_label()]
-                + [_ghost_map_entry(num0, 0, ARRAY_BOX_X_START + 0 * ARRAY_BOX_X_GAP, ARRAY_BOX_Y, "faded")]
-            ),
-            "arrows": [],
-            "badges": [badge],
-        }
-    )
+    # ── Frame 7: store_2_in_map ──────────────────────────────────────
+    frames.append({
+        "frame_id": "store_2_in_map",
+        "step": 3,
+        "title": f"记录 {num0} 到哈希表",
+        "caption": f"执行 seen[{num0}] = {i0}。{num0} 从数组区移动到哈希表。",
+        "objects": (
+            [_target_label(target)] + _arr_boxes({0: "visited"}) + all_index_labels
+            + [_map_zone_title(), _map_entry(num0, i0, 0, "new")]
+            + [_definition_card("card_hash", "哈希表", "保存见过的数字\n和它的下标", 0)]
+            + [_rule_card("card_rule_seen", "seen[number] = index", 1)]
+            + [_rule_card("card_rule_need", f"need = {target} - current", 2)]
+            + [_operation_card(f"seen[{num0}] = {i0}  ✓", 3)]
+        ),
+        "arrows": [{"id": "arrow:store", "from": f"arr:{i0}", "to": f"map:{num0}", "label": "store"}],
+        "badges": [badge],
+    })
 
-    # ── Frame 3: store_2_in_map ────────────────────────────────────
-    # step=3, hash_map_put: store num0 → index 0
-    # map:2 moves from ghost position to its real map slot (same id = CSS transition).
-    frames.append(
-        {
-            "frame_id": "store_2_in_map",
-            "step": 3,
-            "title": f"记录 {num0} 到哈希表",
-            "caption": (
-                f"把 {num0} \u2192 索引 0 记录下来，"
-                f"以后遇到 {complement0} 就能快速找到。"
-            ),
-            "objects": (
-                [_target_label(target)]
-                + _arr_boxes({0: "visited"})
-                + all_index_labels
-                + [_map_zone_title(), _map_entry(num0, 0, 0, "new")]
-            ),
-            "arrows": [{"id": "arrow:store", "from": f"arr:{i0}", "to": f"map:{num0}", "label": "store"}],
-            "badges": [badge],
-        }
-    )
-
-    # ── Frame 4: read_nums1 ────────────────────────────────────────
-    # step=4, array_read: read nums[1]
-    e4_before = events[3].get("before") or {}
-    i1 = e4_before.get("i", 1)
-    num1 = e4_before.get("num", nums[1])
+    # ── Frame 8: read_nums1 ──────────────────────────────────────────
+    e3 = events[3]
+    i1 = e3["before"].get("i", 1)
+    num1 = nums[i1]
     complement1 = target - num1
+    frames.append({
+        "frame_id": "read_nums1",
+        "step": 4,
+        "title": f"读取 nums[{i1}] = {num1}",
+        "caption": f"当前读取 nums[{i1}] = {num1}。需要补数 = {complement1}。",
+        "objects": (
+            [_target_label(target)] + _arr_boxes({0: "visited", 1: "active"}) + all_index_labels
+            + [_complement_box(complement1)]
+            + [_map_zone_title(), _map_entry(num0, 0, 0)]
+            + [_definition_card("card_hash", "哈希表", "保存见过的数字\n和它的下标", 0)]
+            + [_rule_card("card_rule_seen", "seen[number] = index", 1)]
+            + [_rule_card("card_rule_need", f"need = {target} - current", 2)]
+            + [_operation_card(f"current = {num1}\nneed = {target} - {num1} = {complement1}", 3, "active")]
+        ),
+        "arrows": [],
+        "badges": [badge],
+    })
 
-    frames.append(
-        {
-            "frame_id": "read_nums1",
-            "step": 4,
-            "title": f"读取 nums[{i1}]",
-            "caption": (
-                f"当前读取 nums[{i1}] = {num1}。"
-                f"要满足 target = {target}，需要补数 = {complement1}。"
-            ),
-            "objects": (
-                [_target_label(target)]
-                + _arr_boxes({0: "visited", 1: "active"})
-                + all_index_labels
-                + [_complement_box(complement1)]
-                + [_map_zone_title(), _map_entry(num0, 0, 0)]
-            ),
-            "arrows": [],
-            "badges": [badge],
-        }
-    )
+    # ── Frame 9: check_map_success ───────────────────────────────────
+    frames.append({
+        "frame_id": "check_map_success",
+        "step": 5,
+        "title": "哈希表匹配成功！",
+        "caption": f"查找 seen[{complement1}]，找到了！{complement1} 在索引 0。",
+        "objects": (
+            [_target_label(target)] + _arr_boxes({0: "matched", 1: "matched"}) + all_index_labels
+            + [_map_zone_title(), _map_entry(num0, 0, 0, "matched")]
+            + [_definition_card("card_hash", "哈希表", "保存见过的数字\n和它的下标", 0)]
+            + [_rule_card("card_rule_seen", "seen[number] = index", 1)]
+            + [_rule_card("card_rule_need", f"need = {target} - current", 2)]
+            + [_operation_card(f"查找 seen[{complement1}]\n找到了 ✓\n{num0} + {num1} = {target}", 3, "matched")]
+        ),
+        "arrows": [{"id": "arrow:match", "from": f"arr:{i1}", "to": f"map:{num0}", "label": "match", "color": "#66bb6a"}],
+        "badges": [badge],
+    })
 
-    # ── Frame 5: check_complement_2_found ──────────────────────────
-    # step=5, hash_map_get: complement found!
-    frames.append(
-        {
-            "frame_id": "check_complement_2_found",
-            "step": 5,
-            "title": "哈希表匹配成功！",
-            "caption": (
-                f"补数 {complement1} 在哈希表中（索引 0），"
-                f"与当前的 {num1}（索引 1）配对成功。"
-            ),
-            "objects": (
-                [_target_label(target)]
-                + _arr_boxes({0: "matched", 1: "matched"})
-                + all_index_labels
-                + [_map_zone_title(), _map_entry(num0, 0, 0, "matched")]
-            ),
-            "arrows": [{"id": "arrow:match", "from": f"arr:{i1}", "to": f"map:{num0}", "label": "match"}],
-            "badges": [badge],
-        }
-    )
-
-    # ── Frame 6: answer ────────────────────────────────────────────
-    # step=6, answer_found
-    r0, r1 = result[0], result[1]
-    frames.append(
-        {
-            "frame_id": "answer",
-            "step": 6,
-            "title": "返回答案",
-            "caption": (
-                f"返回 [{r0}, {r1}]，"
-                f"即 nums[{r0}] + nums[{r1}] = {nums[r0]} + {nums[r1]} = {target}。"
-            ),
-            "objects": (
-                [_target_label(target)]
-                + _arr_boxes({0: "matched", 1: "matched"})
-                + all_index_labels
-                + [_map_zone_title(), _map_entry(num0, 0, 0, "matched")]
-                + [_answer_box(f"[{r0}, {r1}]")]
-            ),
-            "arrows": [],
-            "badges": [badge],
-        }
-    )
+    # ── Frame 10: answer ─────────────────────────────────────────────
+    frames.append({
+        "frame_id": "answer",
+        "step": 6,
+        "title": "返回答案",
+        "caption": f"返回 [{result[0]}, {result[1]}]。nums[0] + nums[1] = {nums[0]} + {nums[1]} = {target}。",
+        "objects": (
+            [_target_label(target)] + _arr_boxes({0: "matched", 1: "matched"}) + all_index_labels
+            + [_map_zone_title(), _map_entry(num0, 0, 0, "matched")]
+            + [_answer_box(f"[{result[0]}, {result[1]}]")]
+            + [_definition_card("card_hash", "哈希表", "保存见过的数字\n和它的下标", 0)]
+            + [_rule_card("card_rule_seen", "seen[number] = index", 1)]
+            + [_rule_card("card_rule_need", f"need = {target} - current", 2)]
+            + [_note_card(f"返回的是下标 [{result[0]}, {result[1]}]\n因为 nums[0]+nums[1]={target}", 3)]
+        ),
+        "arrows": [],
+        "badges": [badge],
+    })
 
     return frames

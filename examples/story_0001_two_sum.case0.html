@@ -24,6 +24,14 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f2f5;margin:0;
 .st-new{background:#fff3e0;border:2px solid #ff9800;color:#e65100;box-shadow:0 0 0 3px rgba(255,152,0,.2)}
 .st-matched{background:#e8f5e9;border:2px solid #66bb6a;color:#2e7d32;font-weight:700;box-shadow:0 0 0 3px rgba(102,187,106,.25)}
 .st-faded{opacity:0.18;pointer-events:none}
+.st-definition_card{border:2px solid #42a5f5;background:linear-gradient(135deg,#e3f2fd,#bbdefb);color:#0d47a1;border-radius:12px;font-size:.88rem;flex-direction:column;align-items:flex-start;padding:8px 12px;text-align:left;white-space:pre-line}
+.st-definition_card::before{content:'📖 ' attr(data-title);font-weight:700;font-size:.75rem;color:#1565c0;display:block;margin-bottom:4px}
+.st-rule_card{border:2px solid #ab47bc;background:linear-gradient(135deg,#f3e5f5,#e1bee7);color:#4a148c;border-radius:12px;font-size:.85rem;font-family:monospace;font-weight:600;flex-direction:column;align-items:flex-start;padding:6px 12px;text-align:left;white-space:pre-line}
+.st-rule_card::before{content:'📐 ' attr(data-title);font-weight:700;font-size:.72rem;color:#7b1fa2;display:block;margin-bottom:4px}
+.st-operation_card{border:2px solid #ff9800;background:linear-gradient(135deg,#fff3e0,#ffe0b2);color:#e65100;border-radius:10px;font-size:.82rem;font-weight:600;flex-direction:column;align-items:flex-start;padding:6px 12px;text-align:left;white-space:pre-line}
+.st-operation_card::before{content:'▶ ' attr(data-title);font-weight:700;font-size:.72rem;color:#e65100;display:block;margin-bottom:4px}
+.st-note_card{border:1px dashed #bbb;background:#f9f9f9;color:#888;border-radius:8px;font-size:.78rem;flex-direction:column;align-items:flex-start;padding:4px 10px;text-align:left;white-space:pre-line}
+.st-note_card::before{content:'📝 ' attr(data-title);font-weight:600;font-size:.7rem;color:#aaa;display:block;margin-bottom:3px}
 .st-label{background:transparent;border:none;color:#666;font-weight:400;font-size:.85rem}
 .st-idx{position:absolute;bottom:-20px;font-size:.7rem;color:#999;text-align:center;left:0;right:0}
 #caption-area{margin-top:1rem;padding:0 .4rem}
@@ -68,7 +76,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f2f5;margin:0;
     "frame_id": "input_appear",
     "step": 0,
     "title": "输入数组",
-    "caption": "先把输入数组变成可以观察的对象。target = 9，需要找到两个数和为 9 的下标。",
+    "caption": "nums = [2, 7, 11, 15]，target = 9。先把输入变成可以观察的对象。",
     "objects": [
       {
         "id": "label_target",
@@ -174,10 +182,574 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f2f5;margin:0;
     ]
   },
   {
+    "frame_id": "goal_definition",
+    "step": 0,
+    "title": "目标定义",
+    "caption": "找到两个数，使它们的和等于 9。",
+    "objects": [
+      {
+        "id": "label_target",
+        "type": "label",
+        "text": "target = 9",
+        "x": 60,
+        "y": 36,
+        "w": 0,
+        "h": 0,
+        "state": "normal"
+      },
+      {
+        "id": "arr:0",
+        "type": "array_box",
+        "text": "2",
+        "idx": 0,
+        "x": 120,
+        "y": 150,
+        "w": 64,
+        "h": 56,
+        "state": "normal"
+      },
+      {
+        "id": "arr:1",
+        "type": "array_box",
+        "text": "7",
+        "idx": 1,
+        "x": 220,
+        "y": 150,
+        "w": 64,
+        "h": 56,
+        "state": "normal"
+      },
+      {
+        "id": "arr:2",
+        "type": "array_box",
+        "text": "11",
+        "idx": 2,
+        "x": 320,
+        "y": 150,
+        "w": 64,
+        "h": 56,
+        "state": "normal"
+      },
+      {
+        "id": "arr:3",
+        "type": "array_box",
+        "text": "15",
+        "idx": 3,
+        "x": 420,
+        "y": 150,
+        "w": 64,
+        "h": 56,
+        "state": "normal"
+      },
+      {
+        "id": "idx_label:0",
+        "type": "label",
+        "text": "[0]",
+        "x": 152,
+        "y": 210,
+        "w": 0,
+        "h": 0,
+        "state": "normal"
+      },
+      {
+        "id": "idx_label:1",
+        "type": "label",
+        "text": "[1]",
+        "x": 252,
+        "y": 210,
+        "w": 0,
+        "h": 0,
+        "state": "normal"
+      },
+      {
+        "id": "idx_label:2",
+        "type": "label",
+        "text": "[2]",
+        "x": 352,
+        "y": 210,
+        "w": 0,
+        "h": 0,
+        "state": "normal"
+      },
+      {
+        "id": "idx_label:3",
+        "type": "label",
+        "text": "[3]",
+        "x": 452,
+        "y": 210,
+        "w": 0,
+        "h": 0,
+        "state": "normal"
+      },
+      {
+        "id": "card_goal",
+        "type": "definition_card",
+        "title": "目标",
+        "text": "找到两个数\n使它们的和 = 9",
+        "x": 600,
+        "y": 50,
+        "w": 280,
+        "h": 62,
+        "state": "active"
+      }
+    ],
+    "arrows": [],
+    "badges": [
+      {
+        "id": "badge_target",
+        "text": "target = 9"
+      }
+    ]
+  },
+  {
+    "frame_id": "return_definition",
+    "step": 0,
+    "title": "返回值是什么",
+    "caption": "返回的是两个数的下标，不是数字本身。",
+    "objects": [
+      {
+        "id": "label_target",
+        "type": "label",
+        "text": "target = 9",
+        "x": 60,
+        "y": 36,
+        "w": 0,
+        "h": 0,
+        "state": "normal"
+      },
+      {
+        "id": "arr:0",
+        "type": "array_box",
+        "text": "2",
+        "idx": 0,
+        "x": 120,
+        "y": 150,
+        "w": 64,
+        "h": 56,
+        "state": "normal"
+      },
+      {
+        "id": "arr:1",
+        "type": "array_box",
+        "text": "7",
+        "idx": 1,
+        "x": 220,
+        "y": 150,
+        "w": 64,
+        "h": 56,
+        "state": "normal"
+      },
+      {
+        "id": "arr:2",
+        "type": "array_box",
+        "text": "11",
+        "idx": 2,
+        "x": 320,
+        "y": 150,
+        "w": 64,
+        "h": 56,
+        "state": "normal"
+      },
+      {
+        "id": "arr:3",
+        "type": "array_box",
+        "text": "15",
+        "idx": 3,
+        "x": 420,
+        "y": 150,
+        "w": 64,
+        "h": 56,
+        "state": "normal"
+      },
+      {
+        "id": "idx_label:0",
+        "type": "label",
+        "text": "[0]",
+        "x": 152,
+        "y": 210,
+        "w": 0,
+        "h": 0,
+        "state": "normal"
+      },
+      {
+        "id": "idx_label:1",
+        "type": "label",
+        "text": "[1]",
+        "x": 252,
+        "y": 210,
+        "w": 0,
+        "h": 0,
+        "state": "normal"
+      },
+      {
+        "id": "idx_label:2",
+        "type": "label",
+        "text": "[2]",
+        "x": 352,
+        "y": 210,
+        "w": 0,
+        "h": 0,
+        "state": "normal"
+      },
+      {
+        "id": "idx_label:3",
+        "type": "label",
+        "text": "[3]",
+        "x": 452,
+        "y": 210,
+        "w": 0,
+        "h": 0,
+        "state": "normal"
+      },
+      {
+        "id": "card_goal",
+        "type": "definition_card",
+        "title": "目标",
+        "text": "找到两个数\n使它们的和 = 9",
+        "x": 600,
+        "y": 50,
+        "w": 280,
+        "h": 62,
+        "state": "normal"
+      },
+      {
+        "id": "note_card",
+        "type": "note_card",
+        "title": "注意",
+        "text": "answer = [index_a, index_b]",
+        "x": 630,
+        "y": 134,
+        "w": 250,
+        "h": 50,
+        "state": "faded"
+      }
+    ],
+    "arrows": [],
+    "badges": [
+      {
+        "id": "badge_target",
+        "text": "target = 9"
+      }
+    ]
+  },
+  {
+    "frame_id": "hashmap_definition",
+    "step": 0,
+    "title": "哈希表定义",
+    "caption": "哈希表保存已经见过的数字，以及它出现的下标。",
+    "objects": [
+      {
+        "id": "label_target",
+        "type": "label",
+        "text": "target = 9",
+        "x": 60,
+        "y": 36,
+        "w": 0,
+        "h": 0,
+        "state": "normal"
+      },
+      {
+        "id": "arr:0",
+        "type": "array_box",
+        "text": "2",
+        "idx": 0,
+        "x": 120,
+        "y": 150,
+        "w": 64,
+        "h": 56,
+        "state": "normal"
+      },
+      {
+        "id": "arr:1",
+        "type": "array_box",
+        "text": "7",
+        "idx": 1,
+        "x": 220,
+        "y": 150,
+        "w": 64,
+        "h": 56,
+        "state": "normal"
+      },
+      {
+        "id": "arr:2",
+        "type": "array_box",
+        "text": "11",
+        "idx": 2,
+        "x": 320,
+        "y": 150,
+        "w": 64,
+        "h": 56,
+        "state": "normal"
+      },
+      {
+        "id": "arr:3",
+        "type": "array_box",
+        "text": "15",
+        "idx": 3,
+        "x": 420,
+        "y": 150,
+        "w": 64,
+        "h": 56,
+        "state": "normal"
+      },
+      {
+        "id": "idx_label:0",
+        "type": "label",
+        "text": "[0]",
+        "x": 152,
+        "y": 210,
+        "w": 0,
+        "h": 0,
+        "state": "normal"
+      },
+      {
+        "id": "idx_label:1",
+        "type": "label",
+        "text": "[1]",
+        "x": 252,
+        "y": 210,
+        "w": 0,
+        "h": 0,
+        "state": "normal"
+      },
+      {
+        "id": "idx_label:2",
+        "type": "label",
+        "text": "[2]",
+        "x": 352,
+        "y": 210,
+        "w": 0,
+        "h": 0,
+        "state": "normal"
+      },
+      {
+        "id": "idx_label:3",
+        "type": "label",
+        "text": "[3]",
+        "x": 452,
+        "y": 210,
+        "w": 0,
+        "h": 0,
+        "state": "normal"
+      },
+      {
+        "id": "map_zone_title",
+        "type": "label",
+        "text": "哈希表",
+        "x": 60,
+        "y": 280,
+        "w": 0,
+        "h": 0,
+        "state": "normal"
+      },
+      {
+        "id": "map_empty",
+        "type": "label",
+        "text": "(empty)",
+        "x": 120,
+        "y": 335,
+        "w": 0,
+        "h": 0,
+        "state": "faded"
+      },
+      {
+        "id": "card_hash",
+        "type": "definition_card",
+        "title": "哈希表",
+        "text": "保存见过的数字\n和它的下标",
+        "x": 600,
+        "y": 50,
+        "w": 280,
+        "h": 62,
+        "state": "normal"
+      },
+      {
+        "id": "card_rule_seen",
+        "type": "rule_card",
+        "title": "规则",
+        "text": "seen[number] = index",
+        "x": 600,
+        "y": 128,
+        "w": 238,
+        "h": 56,
+        "state": "new"
+      }
+    ],
+    "arrows": [],
+    "badges": [
+      {
+        "id": "badge_target",
+        "text": "target = 9"
+      }
+    ]
+  },
+  {
+    "frame_id": "complement_rule",
+    "step": 0,
+    "title": "补数规则",
+    "caption": "如果 current + need = 9，那么 need 就是我们要找的另一个数。",
+    "objects": [
+      {
+        "id": "label_target",
+        "type": "label",
+        "text": "target = 9",
+        "x": 60,
+        "y": 36,
+        "w": 0,
+        "h": 0,
+        "state": "normal"
+      },
+      {
+        "id": "arr:0",
+        "type": "array_box",
+        "text": "2",
+        "idx": 0,
+        "x": 120,
+        "y": 150,
+        "w": 64,
+        "h": 56,
+        "state": "normal"
+      },
+      {
+        "id": "arr:1",
+        "type": "array_box",
+        "text": "7",
+        "idx": 1,
+        "x": 220,
+        "y": 150,
+        "w": 64,
+        "h": 56,
+        "state": "normal"
+      },
+      {
+        "id": "arr:2",
+        "type": "array_box",
+        "text": "11",
+        "idx": 2,
+        "x": 320,
+        "y": 150,
+        "w": 64,
+        "h": 56,
+        "state": "normal"
+      },
+      {
+        "id": "arr:3",
+        "type": "array_box",
+        "text": "15",
+        "idx": 3,
+        "x": 420,
+        "y": 150,
+        "w": 64,
+        "h": 56,
+        "state": "normal"
+      },
+      {
+        "id": "idx_label:0",
+        "type": "label",
+        "text": "[0]",
+        "x": 152,
+        "y": 210,
+        "w": 0,
+        "h": 0,
+        "state": "normal"
+      },
+      {
+        "id": "idx_label:1",
+        "type": "label",
+        "text": "[1]",
+        "x": 252,
+        "y": 210,
+        "w": 0,
+        "h": 0,
+        "state": "normal"
+      },
+      {
+        "id": "idx_label:2",
+        "type": "label",
+        "text": "[2]",
+        "x": 352,
+        "y": 210,
+        "w": 0,
+        "h": 0,
+        "state": "normal"
+      },
+      {
+        "id": "idx_label:3",
+        "type": "label",
+        "text": "[3]",
+        "x": 452,
+        "y": 210,
+        "w": 0,
+        "h": 0,
+        "state": "normal"
+      },
+      {
+        "id": "map_zone_title",
+        "type": "label",
+        "text": "哈希表",
+        "x": 60,
+        "y": 280,
+        "w": 0,
+        "h": 0,
+        "state": "normal"
+      },
+      {
+        "id": "map_empty",
+        "type": "label",
+        "text": "(empty)",
+        "x": 120,
+        "y": 335,
+        "w": 0,
+        "h": 0,
+        "state": "faded"
+      },
+      {
+        "id": "card_hash",
+        "type": "definition_card",
+        "title": "哈希表",
+        "text": "保存见过的数字\n和它的下标",
+        "x": 600,
+        "y": 50,
+        "w": 280,
+        "h": 62,
+        "state": "normal"
+      },
+      {
+        "id": "card_rule_seen",
+        "type": "rule_card",
+        "title": "规则",
+        "text": "seen[number] = index",
+        "x": 600,
+        "y": 128,
+        "w": 238,
+        "h": 56,
+        "state": "normal"
+      },
+      {
+        "id": "card_rule_need",
+        "type": "rule_card",
+        "title": "规则",
+        "text": "need = 9 - current",
+        "x": 600,
+        "y": 206,
+        "w": 238,
+        "h": 56,
+        "state": "new"
+      }
+    ],
+    "arrows": [],
+    "badges": [
+      {
+        "id": "badge_target",
+        "text": "target = 9"
+      }
+    ]
+  },
+  {
     "frame_id": "read_nums0",
     "step": 1,
-    "title": "读取 nums[0]",
-    "caption": "当前读取 nums[0] = 2。要满足 target = 9，需要补数 = 7。",
+    "title": "读取 nums[0] = 2",
+    "caption": "当前读取 nums[0] = 2。需要补数 = 7。",
     "objects": [
       {
         "id": "label_target",
@@ -282,6 +854,70 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f2f5;margin:0;
         "w": 110,
         "h": 48,
         "state": "normal"
+      },
+      {
+        "id": "map_zone_title",
+        "type": "label",
+        "text": "哈希表",
+        "x": 60,
+        "y": 280,
+        "w": 0,
+        "h": 0,
+        "state": "normal"
+      },
+      {
+        "id": "map_empty",
+        "type": "label",
+        "text": "(empty)",
+        "x": 120,
+        "y": 335,
+        "w": 0,
+        "h": 0,
+        "state": "faded"
+      },
+      {
+        "id": "card_hash",
+        "type": "definition_card",
+        "title": "哈希表",
+        "text": "保存见过的数字\n和它的下标",
+        "x": 600,
+        "y": 50,
+        "w": 280,
+        "h": 62,
+        "state": "normal"
+      },
+      {
+        "id": "card_rule_seen",
+        "type": "rule_card",
+        "title": "规则",
+        "text": "seen[number] = index",
+        "x": 600,
+        "y": 128,
+        "w": 238,
+        "h": 56,
+        "state": "normal"
+      },
+      {
+        "id": "card_rule_need",
+        "type": "rule_card",
+        "title": "规则",
+        "text": "need = 9 - current",
+        "x": 600,
+        "y": 206,
+        "w": 238,
+        "h": 56,
+        "state": "normal"
+      },
+      {
+        "id": "op_card",
+        "type": "operation_card",
+        "title": "操作",
+        "text": "current = 2\nneed = 9 - 2 = 7",
+        "x": 600,
+        "y": 284,
+        "w": 252,
+        "h": 56,
+        "state": "active"
       }
     ],
     "arrows": [],
@@ -293,10 +929,10 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f2f5;margin:0;
     ]
   },
   {
-    "frame_id": "check_complement_7",
+    "frame_id": "check_map_fail",
     "step": 2,
-    "title": "检查哈希表",
-    "caption": "补数 7 不在哈希表中（表为空）。所以不能匹配。",
+    "title": "查询哈希表",
+    "caption": "查找 seen[7]，7 不存在。还不能返回答案。",
     "objects": [
       {
         "id": "label_target",
@@ -421,6 +1057,50 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f2f5;margin:0;
         "w": 110,
         "h": 48,
         "state": "faded"
+      },
+      {
+        "id": "card_hash",
+        "type": "definition_card",
+        "title": "哈希表",
+        "text": "保存见过的数字\n和它的下标",
+        "x": 600,
+        "y": 50,
+        "w": 280,
+        "h": 62,
+        "state": "normal"
+      },
+      {
+        "id": "card_rule_seen",
+        "type": "rule_card",
+        "title": "规则",
+        "text": "seen[number] = index",
+        "x": 600,
+        "y": 128,
+        "w": 238,
+        "h": 56,
+        "state": "normal"
+      },
+      {
+        "id": "card_rule_need",
+        "type": "rule_card",
+        "title": "规则",
+        "text": "need = 9 - current",
+        "x": 600,
+        "y": 206,
+        "w": 238,
+        "h": 56,
+        "state": "normal"
+      },
+      {
+        "id": "op_card",
+        "type": "operation_card",
+        "title": "操作",
+        "text": "查找 seen[7]\n7 不存在 ✗",
+        "x": 600,
+        "y": 284,
+        "w": 252,
+        "h": 56,
+        "state": "active"
       }
     ],
     "arrows": [],
@@ -435,7 +1115,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f2f5;margin:0;
     "frame_id": "store_2_in_map",
     "step": 3,
     "title": "记录 2 到哈希表",
-    "caption": "把 2 → 索引 0 记录下来，以后遇到 7 就能快速找到。",
+    "caption": "执行 seen[2] = 0。2 从数组区移动到哈希表。",
     "objects": [
       {
         "id": "label_target",
@@ -550,6 +1230,50 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f2f5;margin:0;
         "w": 110,
         "h": 48,
         "state": "new"
+      },
+      {
+        "id": "card_hash",
+        "type": "definition_card",
+        "title": "哈希表",
+        "text": "保存见过的数字\n和它的下标",
+        "x": 600,
+        "y": 50,
+        "w": 280,
+        "h": 62,
+        "state": "normal"
+      },
+      {
+        "id": "card_rule_seen",
+        "type": "rule_card",
+        "title": "规则",
+        "text": "seen[number] = index",
+        "x": 600,
+        "y": 128,
+        "w": 238,
+        "h": 56,
+        "state": "normal"
+      },
+      {
+        "id": "card_rule_need",
+        "type": "rule_card",
+        "title": "规则",
+        "text": "need = 9 - current",
+        "x": 600,
+        "y": 206,
+        "w": 238,
+        "h": 56,
+        "state": "normal"
+      },
+      {
+        "id": "op_card",
+        "type": "operation_card",
+        "title": "操作",
+        "text": "seen[2] = 0  ✓",
+        "x": 600,
+        "y": 284,
+        "w": 252,
+        "h": 56,
+        "state": "active"
       }
     ],
     "arrows": [
@@ -570,8 +1294,8 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f2f5;margin:0;
   {
     "frame_id": "read_nums1",
     "step": 4,
-    "title": "读取 nums[1]",
-    "caption": "当前读取 nums[1] = 7。要满足 target = 9，需要补数 = 2。",
+    "title": "读取 nums[1] = 7",
+    "caption": "当前读取 nums[1] = 7。需要补数 = 2。",
     "objects": [
       {
         "id": "label_target",
@@ -696,6 +1420,50 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f2f5;margin:0;
         "w": 110,
         "h": 48,
         "state": "normal"
+      },
+      {
+        "id": "card_hash",
+        "type": "definition_card",
+        "title": "哈希表",
+        "text": "保存见过的数字\n和它的下标",
+        "x": 600,
+        "y": 50,
+        "w": 280,
+        "h": 62,
+        "state": "normal"
+      },
+      {
+        "id": "card_rule_seen",
+        "type": "rule_card",
+        "title": "规则",
+        "text": "seen[number] = index",
+        "x": 600,
+        "y": 128,
+        "w": 238,
+        "h": 56,
+        "state": "normal"
+      },
+      {
+        "id": "card_rule_need",
+        "type": "rule_card",
+        "title": "规则",
+        "text": "need = 9 - current",
+        "x": 600,
+        "y": 206,
+        "w": 238,
+        "h": 56,
+        "state": "normal"
+      },
+      {
+        "id": "op_card",
+        "type": "operation_card",
+        "title": "操作",
+        "text": "current = 7\nneed = 9 - 7 = 2",
+        "x": 600,
+        "y": 284,
+        "w": 252,
+        "h": 56,
+        "state": "active"
       }
     ],
     "arrows": [],
@@ -707,10 +1475,10 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f2f5;margin:0;
     ]
   },
   {
-    "frame_id": "check_complement_2_found",
+    "frame_id": "check_map_success",
     "step": 5,
     "title": "哈希表匹配成功！",
-    "caption": "补数 2 在哈希表中（索引 0），与当前的 7（索引 1）配对成功。",
+    "caption": "查找 seen[2]，找到了！2 在索引 0。",
     "objects": [
       {
         "id": "label_target",
@@ -825,6 +1593,50 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f2f5;margin:0;
         "w": 110,
         "h": 48,
         "state": "matched"
+      },
+      {
+        "id": "card_hash",
+        "type": "definition_card",
+        "title": "哈希表",
+        "text": "保存见过的数字\n和它的下标",
+        "x": 600,
+        "y": 50,
+        "w": 280,
+        "h": 62,
+        "state": "normal"
+      },
+      {
+        "id": "card_rule_seen",
+        "type": "rule_card",
+        "title": "规则",
+        "text": "seen[number] = index",
+        "x": 600,
+        "y": 128,
+        "w": 238,
+        "h": 56,
+        "state": "normal"
+      },
+      {
+        "id": "card_rule_need",
+        "type": "rule_card",
+        "title": "规则",
+        "text": "need = 9 - current",
+        "x": 600,
+        "y": 206,
+        "w": 238,
+        "h": 56,
+        "state": "normal"
+      },
+      {
+        "id": "op_card",
+        "type": "operation_card",
+        "title": "操作",
+        "text": "查找 seen[2]\n找到了 ✓\n2 + 7 = 9",
+        "x": 600,
+        "y": 284,
+        "w": 252,
+        "h": 56,
+        "state": "matched"
       }
     ],
     "arrows": [
@@ -832,7 +1644,8 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f2f5;margin:0;
         "id": "arrow:match",
         "from": "arr:1",
         "to": "map:2",
-        "label": "match"
+        "label": "match",
+        "color": "#66bb6a"
       }
     ],
     "badges": [
@@ -846,7 +1659,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f2f5;margin:0;
     "frame_id": "answer",
     "step": 6,
     "title": "返回答案",
-    "caption": "返回 [0, 1]，即 nums[0] + nums[1] = 2 + 7 = 9。",
+    "caption": "返回 [0, 1]。nums[0] + nums[1] = 2 + 7 = 9。",
     "objects": [
       {
         "id": "label_target",
@@ -971,6 +1784,50 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f2f5;margin:0;
         "w": 150,
         "h": 56,
         "state": "normal"
+      },
+      {
+        "id": "card_hash",
+        "type": "definition_card",
+        "title": "哈希表",
+        "text": "保存见过的数字\n和它的下标",
+        "x": 600,
+        "y": 50,
+        "w": 280,
+        "h": 62,
+        "state": "normal"
+      },
+      {
+        "id": "card_rule_seen",
+        "type": "rule_card",
+        "title": "规则",
+        "text": "seen[number] = index",
+        "x": 600,
+        "y": 128,
+        "w": 238,
+        "h": 56,
+        "state": "normal"
+      },
+      {
+        "id": "card_rule_need",
+        "type": "rule_card",
+        "title": "规则",
+        "text": "need = 9 - current",
+        "x": 600,
+        "y": 206,
+        "w": 238,
+        "h": 56,
+        "state": "normal"
+      },
+      {
+        "id": "note_card",
+        "type": "note_card",
+        "title": "注意",
+        "text": "返回的是下标 [0, 1]\n因为 nums[0]+nums[1]=9",
+        "x": 630,
+        "y": 290,
+        "w": 250,
+        "h": 50,
+        "state": "faded"
       }
     ],
     "arrows": [],
@@ -1041,6 +1898,10 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f0f2f5;margin:0;
 
       // Update class
       node.className = 'st-obj st-' + (o.state || 'normal');
+      // Set data-title for cards (used by CSS ::before)
+      if (o.type === 'definition_card' || o.type === 'rule_card' || o.type === 'operation_card' || o.type === 'note_card') {
+          node.setAttribute('data-title', o.title || o.text || '');
+      }
       // Update transform (smooth CSS transition)
       node.style.transform = 'translate(' + (o.x || 0) + 'px,' + (o.y || 0) + 'px)';
       node.style.width = (o.w || 64) + 'px';

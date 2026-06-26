@@ -76,6 +76,8 @@ uv run python -m pv render-story problems/0001_two_sum/trace.sample.json --outpu
 | Vectorized / NumPy | Operation graph trace | 🔮 design doc only |
 
 > The story animation renderer (`render-story`) turns selected curated traces into spatial animations with moving objects, arrows, and color-coded states. Currently supports Two Sum.
+>
+> ⚠️ The current story demo is experimental. The long-term direction is lesson-script-driven concept visualization, not trace-driven animation. See [docs/story-vision-realignment.md](docs/story-vision-realignment.md).
 
 ## Learner Mode
 
@@ -128,6 +130,8 @@ text / HTML / SVG / React visualization
 - [Learner Submissions](docs/learner-submissions.md)
 - [Vectorized Trace Design](docs/vectorized-trace.md)
 - [Public Roadmap](docs/public-roadmap.md)
+- [Story Vision Realignment](docs/story-vision-realignment.md)
+- [Storyboard Schema](docs/storyboard-schema.md)
 
 ## Suggested First 10 Problems
 

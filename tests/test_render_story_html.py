@@ -113,6 +113,62 @@ class TestRenderStoryHtml(unittest.TestCase):
         self.assertNotIn("http://", cleaned)
         self.assertNotIn("https://", cleaned)
 
+    def test_contains_definition_card_css(self):
+        from pv.render_story_html import render_story_to_html
+        html = render_story_to_html(self.frames)
+        self.assertIn("definition_card", html,
+            "CSS should include definition_card style")
+
+    def test_contains_rule_card_css(self):
+        from pv.render_story_html import render_story_to_html
+        html = render_story_to_html(self.frames)
+        self.assertIn("rule_card", html,
+            "CSS should include rule_card style")
+
+    def test_contains_operation_card_css(self):
+        from pv.render_story_html import render_story_to_html
+        html = render_story_to_html(self.frames)
+        self.assertIn("operation_card", html,
+            "CSS should include operation_card style")
+
+    def test_contains_note_card_css(self):
+        from pv.render_story_html import render_story_to_html
+        html = render_story_to_html(self.frames)
+        self.assertIn("note_card", html,
+            "CSS should include note_card style")
+
+    def test_still_uses_object_nodes(self):
+        from pv.render_story_html import render_story_to_html
+        html = render_story_to_html(self.frames)
+        self.assertIn("objectNodes", html)
+
+    def test_still_no_objdiv_innerhtml(self):
+        from pv.render_story_html import render_story_to_html
+        html = render_story_to_html(self.frames)
+        self.assertNotIn("objDiv.innerHTML", html)
+
+    def test_still_no_external_links(self):
+        from pv.render_story_html import render_story_to_html
+        html = render_story_to_html(self.frames)
+        cleaned = html.replace("http://www.w3.org/2000/svg", "")
+        self.assertNotIn("http://", cleaned)
+        self.assertNotIn("https://", cleaned)
+
+    def test_data_title_uses_title_field(self):
+        """JS should set data-title from o.title, not o.text alone."""
+        from pv.render_story_html import render_story_to_html
+        html = render_story_to_html(self.frames)
+        # The JS should reference o.title (or o.title || o.text)
+        self.assertIn("o.title", html,
+            "JS should use o.title for data-title")
+
+    def test_has_pre_line_for_cards(self):
+        """Card CSS should include white-space: pre-line for multi-line text."""
+        from pv.render_story_html import render_story_to_html
+        html = render_story_to_html(self.frames)
+        self.assertIn("pre-line", html,
+            "Card CSS should include white-space: pre-line")
+
 
 if __name__ == "__main__":
     unittest.main()
