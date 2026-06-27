@@ -15,6 +15,7 @@
 
 | Command | Purpose | Example |
 |---------|---------|---------|
+| `serve` | 本地交互式代码运行器 | `pv serve --host 127.0.0.1 --port 8765` |
 | `render-code` | 用户代码执行过程 | `pv render-code problems/0001_two_sum --case-index 0` |
 | `render-visual` | 官方概念可视化 | `pv render-visual problems/0001_two_sum --case-index 0` |
 | `render-html` | trace viewer | `pv render-html trace.json` |
@@ -64,9 +65,29 @@ uv run python -m pv render-story problems/0001_two_sum/trace.sample.json --outpu
 
 # 9. 查看自己代码的执行过程
 uv run python -m pv render-code problems/0001_two_sum --case-index 0 --output examples/code_0001_two_sum.case0.html
+
+# 10. 启动本地交互式 LeetCode-style 运行器
+uv run python -m pv serve --host 127.0.0.1 --port 8765
+# 打开 http://127.0.0.1:8765/，粘贴 class Solution，选择用例，点击 Run。
 ```
 
 > 如果不使用 uv，可以用标准 venv：`python3 -m venv .venv && source .venv/bin/activate && pip install -e .`，之后不需要 `uv run` 前缀。
+
+## Local Interactive Runner
+
+启动一个本地 LeetCode-style 交互页面，在浏览器中编写代码、运行、查看行级执行过程：
+
+```bash
+uv run python -m pv serve --host 127.0.0.1 --port 8765
+```
+
+打开 `http://127.0.0.1:8765/`，即可：
+
+- 选择题目标签和用例
+- 在 textarea 中编写或修改 `class Solution`
+- 点击 Run → 运行完成后显示 PASSED/FAILED/ERROR 和代码执行回放
+
+> 仅限受信任的本地开发环境使用。不要暴露到公网。
 
 ## Implemented Problems
 

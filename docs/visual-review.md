@@ -96,3 +96,45 @@ Next visual review should check:
 - Is the code-block highlight block-like rather than a long cursor strip?
 - Do skipped lines keep consistent code font/color if that is the current user preference?
 - Are controls visible at common zoom levels?
+
+## 2026-06-27 — local LeetCode-style runner
+
+Page:
+`http://127.0.0.1:8765/`
+
+Reviewer:
+`failure-fix-agent` using real browser (`agent-browser` / Chromium CDP)
+
+Viewport:
+1280×577
+
+Result:
+PASS
+
+Screenshots:
+
+- Initial: `/tmp/pv_serve_initial.png`
+- After Run: `/tmp/pv_serve_result.png`
+
+Findings:
+
+- LeetCode-style runner feel: PASS
+- Code input clarity: PASS
+- Problem / Case / Run clarity: PASS
+- Result status clarity: PASS
+- actual / expected clarity: PASS
+- Execution Viewer embedding: PASS
+- Code viewer readability: PASS
+- User flow clarity: PASS
+- Layout / overflow: PASS
+- Misleading realtime / streaming wording: PASS
+
+Issues:
+
+- P0: none
+- P1: none
+- P2: none
+
+Recommendation:
+
+Commit with message: `feat: add local LeetCode-style code runner with split-panel UI and execution viewer`

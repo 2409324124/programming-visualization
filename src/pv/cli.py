@@ -541,6 +541,28 @@ def cmd_render_code(args: argparse.Namespace) -> None:
         print(html)
 
 
+def cmd_serve(args: argparse.Namespace) -> None:
+    """Execute the 'serve' subcommand — start local interactive runner."""
+    try:
+        from pv.server import run_server
+    except ImportError as exc:
+        print(f"错误: server 模块加载失败: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+    host = args.host
+    port = int(args.port)
+
+    if host == "0.0.0.0":
+        print("⚠ 警告: 监听 0.0.0.0 会暴露给局域网。", file=sys.stderr)
+        print("   仅用于受信任的本地开发环境。", file=sys.stderr)
+        print()
+
+    project_root = args.project_root
+    if project_root:
+        print(f"使用指定的项目根目录: {project_root}")
+    run_server(host=host, port=port, project_root=project_root)
+
+
 def main():
     parser = argparse.ArgumentParser(prog="pv", description="编程可视化学习器")
     subparsers = parser.add_subparsers(dest="command")
@@ -591,6 +613,18 @@ def main():
     render_code_parser.add_argument("--case-index", type=int, default=0, help="用例索引（默认 0）")
     render_code_parser.add_argument("--output", "-o", help="输出 HTML 文件路径")
 
+    # serve subcommand
+    serve_parser = subparsers.add_parser(
+        "serve",
+        help="启动本地 LeetCode-style 交互运行器",
+    )
+    serve_parser.add_argument("--host", default="127.0.0.1",
+                              help="监听地址（默认 127.0.0.1）")
+    serve_parser.add_argument("--port", default=8765, type=int,
+                              help="监听端口（默认 8765）")
+    serve_parser.add_argument("--project-root", default=None,
+                              help="项目根目录（默认自动检测）")
+
     # render-visual subcommand (new primary path)
     render_visual_parser = subparsers.add_parser(
         "render-visual",
@@ -620,5 +654,7 @@ def main():
         cmd_render_visual(args)
     elif args.command == "render-code":
         cmd_render_code(args)
+    elif args.command == "serve":
+        cmd_serve(args)
     else:
         parser.print_help()
