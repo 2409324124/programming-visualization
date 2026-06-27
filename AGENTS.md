@@ -6,9 +6,11 @@
 
 1. `AGENTS.md`（本文件）— 项目总纲 + 硬规则
 2. `README.md` — 项目定位 + Quickstart
-3. `docs/harness-plan.md` — harness 架构设计
-4. `docs/trace-schema.md` — trace 事件词汇表
-5. `docs/public-roadmap.md` — 已完成 / 下一步
+3. `docs/public-roadmap.md` — 已完成 / 下一步
+4. `docs/agent-handoff.md` — 当前窗口接力棒，必须先读
+5. `docs/visual-review.md` — UI / HTML 视觉验收记录
+6. `docs/harness-plan.md` — harness 架构设计
+7. `docs/trace-schema.md` — trace 事件词汇表
 
 **文件速查表：**
 
@@ -52,6 +54,93 @@ uv run python -m unittest discover -s tests -v
 ```
 
 **当前状态：** 4 道题目，307 测试全通过，3 种渲染器（text / HTML trace viewer / code viewer），runtime-bound 可视化管线已在 main。
+
+## OpenCode Session Rollover Protocol
+
+OpenCode 不支持可靠的上下文窗口自动压缩。长会话必须在上下文变脆之前主动切换窗口，并把状态写回仓库文档。
+
+### 阈值
+
+- **230k–250k context：** 开始准备 handoff，不再启动大重构。
+- **250k–280k context：** 只做小修、验证、文档化；优先提交稳定改动。
+- **约 280k context：** 必须停止新功能，更新 `docs/agent-handoff.md` 并切新窗口。
+- **不要等到 300k：** 接近硬上限时模型容易忘记刚修过的问题，尤其是 UI 细节和架构边界。
+
+### 切窗口前必须做
+
+当前 agent 在切窗口前必须更新 `docs/agent-handoff.md`，至少包含：
+
+1. 当前分支和 `git status --short --branch`。
+2. 最近 5–8 个 commit。
+3. 当前 phase / 当前任务。
+4. 已完成事项。
+5. 仍然坏掉或未确认的事项。
+6. 最近跑过且通过/失败的命令。
+7. 生成过的 demo HTML。
+8. `mimo-2.5-pro` 或人工视觉验收状态。
+9. 不要重复踩的坑。
+10. 给新 agent 的下一条可执行指令。
+
+至少运行：
+
+```bash
+git status --short --branch
+git log --oneline -8 --decorate
+uv run python -m unittest discover -s tests -v
+```
+
+如果改过 HTML / UI / renderer，还要重新生成 demo：
+
+```bash
+uv run python -m pv render-code problems/0001_two_sum \
+  --case-index 0 \
+  --output examples/code_0001_two_sum.case0.html
+
+uv run python -m pv render-visual problems/0001_two_sum \
+  --case-index 0 \
+  --lesson problems/0001_two_sum/lesson.story.json \
+  --output examples/visual_0001_two_sum.case0.html
+```
+
+### 新窗口启动顺序
+
+新 agent 不允许凭记忆继续工作。必须先读：
+
+1. `AGENTS.md`
+2. `README.md`
+3. `docs/public-roadmap.md`
+4. `docs/agent-handoff.md`
+5. `docs/visual-review.md`（如果任务涉及 HTML/UI/可视化）
+
+然后运行：
+
+```bash
+git status --short --branch
+git log --oneline -8 --decorate
+```
+
+最后重复 `docs/agent-handoff.md` 中记录的最新验证命令。
+
+### Handoff 写法规则
+
+不要写“继续优化”“修一下 UI”这种模糊描述。下一步必须是可执行指令，例如：
+
+```text
+Next action:
+Fix render_learner_html.py so skipped code keeps the same font/color/opacity as normal code, while only the not-executed badge is visually muted. Regenerate examples/code_0001_two_sum.case0.html and run the full unittest suite.
+```
+
+### 视觉验收规则
+
+DeepSeek / 无视觉主模型不能独自判断 HTML 是否成功。涉及 `examples/*.html`、`src/pv/render_*.py` 或可视化布局时，必须把截图交给 `mimo-2.5-pro` 或人工视觉验收，并把结果写入 `docs/visual-review.md`。
+
+单元测试证明数据和命令正确；视觉验收证明用户真的看得懂。
+
+### 提交纪律
+
+- 稳定、测试通过、视觉无 P0/P1：提交后再切窗口。
+- 不稳定：不要假装完成，把失败状态和下一步写进 `docs/agent-handoff.md`。
+- 切窗口前不要留下“我以为”的隐含状态，必须落到文件里。
 
 ## Project Mission
 
