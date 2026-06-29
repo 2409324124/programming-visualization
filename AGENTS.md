@@ -53,7 +53,7 @@ uv run python -m pv render-story trace.json --output out.html
 uv run python -m unittest discover -s tests -v
 ```
 
-**当前状态：** 4 道题目，307 测试全通过，3 种渲染器（text / HTML trace viewer / code viewer），runtime-bound 可视化管线已在 main。
+**当前状态：** 5 道题目，353 测试全通过，3 种渲染器（text / HTML trace viewer / code viewer），runtime-bound 可视化管线已在 main。
 
 ## OpenCode Session Rollover Protocol
 

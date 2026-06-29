@@ -1,0 +1,37 @@
+{
+  "problem_id": "0198_house_robber",
+  "display_title": "打家劫舍",
+  "pattern_tags": ["dynamic_programming"],
+  "difficulty": "medium",
+  "entry": {
+    "class_name": "Solution",
+    "method_name": "rob"
+  },
+  "input_schema": {
+    "type": "object",
+    "fields": [
+      {"name": "nums", "type": "list[int]"}
+    ]
+  },
+  "output_schema": {
+    "type": "int",
+    "description": "在不能选择相邻房屋的前提下，能拿到的最大金额"
+  },
+  "checker": {
+    "name": "exact",
+    "description": "结果是单个整数"
+  },
+  "adapter": {
+    "input": {},
+    "output": {"kind": "builtin"}
+  },
+  "limits": {
+    "max_events": 1000
+  },
+  "reference": {
+    "platform": "LeetCode",
+    "id": 198,
+    "title": "House Robber",
+    "usage": "compatibility reference only"
+  }
+}

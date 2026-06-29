@@ -97,6 +97,7 @@ uv run python -m pv serve --host 127.0.0.1 --port 8765
 | `0011` | Container With Most Water | two_pointers, greedy | pointer_init, area_compute, best_update, comparison_reason, pointer_move |
 | `0206` | Reverse Linked List | linked_list | pointer_init, save_next, link_set, cursor_move |
 | `0070` | Climbing Stairs | dynamic_programming | dp_init, dp_read, transition_considered, dp_write |
+| `0198` | House Robber | dynamic_programming | dp_init, dp_read, choose_transition, dp_write |
 
 ## Visualization Types
 
@@ -175,7 +176,7 @@ text / HTML / SVG / React visualization
 4. Reverse Linked List              pointer rewiring
 5. Linked List Cycle                fast / slow pointers
 6. Climbing Stairs                  1-D DP
-7. House Robber                     DP choose / skip
+7. House Robber                     DP choose / skip ✅
 8. Binary Tree Level Order          queue + tree levels
 9. Permutations                     backtracking
 10. Number of Islands               grid DFS/BFS

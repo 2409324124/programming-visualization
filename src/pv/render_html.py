@@ -45,6 +45,7 @@ footer .status.failed{color:#c62828}
 .dp-table{display:flex;gap:4px;flex-wrap:wrap;margin:1rem 0;align-items:flex-end}
 .dp-cell{width:52px;min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;border:2px solid #e0e0e0;border-radius:6px;background:#fafafa;padding:4px;transition:all .2s}
 .dp-cell .dp-idx{font-size:.7rem;color:#999;margin-bottom:2px}
+.dp-cell .dp-house{font-size:.68rem;color:#777;margin-bottom:2px}
 .dp-cell .dp-val{font-weight:700;font-size:.95rem;color:#333;min-height:20px}
 .dp-cell.hl-read{background:#e3f2fd;border-color:#42a5f5;box-shadow:0 0 0 2px #90caf9}
 .dp-cell.hl-write{background:#fff3e0;border-color:#ff9800;box-shadow:0 0 0 2px #ffb74d}
@@ -108,37 +109,54 @@ def _render_linked_list_input(key: str, vals: list) -> str:
 def _render_dp_table(problem: dict, run: dict, events: list[dict]) -> str:
     """Render a DP table visualization for dynamic-programming problems.
 
-    Renders ``n+1`` cells (index 0 through n) with index labels.
-    Cells for dp[0] and dp[1] are pre-filled with value 1 (the base cases
-    for climbing stairs).  Remaining cells are left empty for the JS layer
-    to fill dynamically as the user steps through events.
+    Supports two common educational DP shapes:
+    - scalar ``n`` input: renders ``n+1`` cells, used by Climbing Stairs.
+    - array ``nums`` input: renders one DP cell per input value, used by
+      House Robber.
     """
     inp = run.get("input", {})
     n = inp.get("n")
-    if not isinstance(n, int) or n < 0:
+    nums = inp.get("nums")
+    is_n_table = isinstance(n, int) and n >= 0
+    is_nums_table = (
+        isinstance(nums, list)
+        and len(nums) > 0
+        and all(isinstance(x, (int, float)) for x in nums)
+    )
+    if not is_n_table and not is_nums_table:
         return ""
+    cell_count = n + 1 if is_n_table else len(nums)
 
     # Determine final dp state from events (dp_write events)
-    filled: dict[int, int] = {0: 1, 1: 1}
+    filled: dict[int, int | float] = {0: 1, 1: 1} if is_n_table else {}
     for ev in events:
         before = ev.get("before") or {}
         after = ev.get("after") or {}
         # Look for dp_write events that have explicit index info
         if ev.get("event_type") in ("update_dp", "dp_write"):
-            idx = after.get("dp_idx") or before.get("dp_idx")
-            val = after.get("dp") or after.get("dp_val")
+            idx = after["dp_idx"] if "dp_idx" in after else before.get("dp_idx")
+            if "dp" in after:
+                val = after["dp"]
+            elif "dp_val" in after:
+                val = after["dp_val"]
+            else:
+                val = None
             if isinstance(idx, int) and val is not None:
                 filled[idx] = val
 
     parts: list[str] = ['<div><strong>DP 表:</strong></div>']
     parts.append('<div class="dp-table">')
-    for i in range(n + 1):
+    for i in range(cell_count):
         val = filled.get(i)
         val_html = _esc(val) if val is not None else ""
         cls = "dp-cell filled" if val is not None else "dp-cell"
+        house_html = ""
+        if is_nums_table:
+            house_html = f'<span class="dp-house">房屋金额 {_esc(nums[i])}</span>'
         parts.append(
             f'<div class="{cls}" data-dp-idx="{i}">'
             f'<span class="dp-idx">{i}</span>'
+            f'{house_html}'
             f'<span class="dp-val">{val_html}</span>'
             f'</div>'
         )
@@ -153,8 +171,7 @@ def _render_input_panel(run: dict, problem: dict | None = None,
         return ""
     is_linked_list = problem is not None and "linked_list" in problem.get("pattern_tags", [])
     is_dp = (problem is not None
-             and "dynamic_programming" in problem.get("pattern_tags", [])
-             and isinstance(run.get("input", {}).get("n"), int))
+             and "dynamic_programming" in problem.get("pattern_tags", []))
     parts: list[str] = ['<section class="input-panel"><h2>输入</h2>']
     for key, val in inp.items():
         if isinstance(val, list) and val and all(isinstance(x, (int, float)) for x in val):

@@ -1,0 +1,580 @@
+{
+  "trace_version": "0.1.0",
+  "problem": {
+    "problem_id": "0198_house_robber",
+    "display_title": "打家劫舍",
+    "pattern_tags": [
+      "dynamic_programming"
+    ],
+    "difficulty": "medium",
+    "entry": {
+      "class_name": "Solution",
+      "method_name": "rob"
+    },
+    "input_schema": {
+      "type": "object",
+      "fields": [
+        {
+          "name": "nums",
+          "type": "list[int]"
+        }
+      ]
+    },
+    "output_schema": {
+      "type": "int",
+      "description": "在不能选择相邻房屋的前提下，能拿到的最大金额"
+    },
+    "checker": {
+      "name": "exact",
+      "description": "结果是单个整数"
+    },
+    "adapter": {
+      "input": {},
+      "output": {
+        "kind": "builtin"
+      }
+    },
+    "limits": {
+      "max_events": 1000
+    },
+    "reference": {
+      "platform": "LeetCode",
+      "id": 198,
+      "title": "House Robber",
+      "usage": "compatibility reference only"
+    }
+  },
+  "run": {
+    "language": "python",
+    "entry": {
+      "class_name": "Solution",
+      "method_name": "rob"
+    },
+    "input": {
+      "nums": [
+        5,
+        1,
+        6,
+        10,
+        2
+      ]
+    },
+    "expected": 15,
+    "actual": 15,
+    "status": "passed",
+    "total_steps": 16,
+    "truncated": false
+  },
+  "events": [
+    {
+      "step": 1,
+      "event_type": "dp_init",
+      "message": "创建 DP 表格：共有 5 间房。dp[i] 表示看完第 i 间房后，最多能拿多少钱。",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "arr:nums",
+          "dp:table"
+        ],
+        "indices": {
+          "arr:nums": [
+            0
+          ],
+          "dp:table": [
+            0
+          ]
+        }
+      },
+      "before": {
+        "nums": [
+          5,
+          1,
+          6,
+          10,
+          2
+        ]
+      },
+      "after": null,
+      "pedagogy": {
+        "mental_model": "每到一间房，都只做一个选择：跳过它，或者偷它。因为相邻房子不能同时选，偷当前房时只能接在 dp[i-2] 后面。",
+        "why_now": "先把输入排成一排，再从左到右填 DP 表格。"
+      },
+      "line": null,
+      "timestamp_ms": 1782698021086
+    },
+    {
+      "step": 2,
+      "event_type": "choose_transition",
+      "message": "第 0 间房没有左邻选择冲突：偷它可以拿 5，跳过是 0。",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "arr:nums",
+          "dp:table"
+        ],
+        "indices": {
+          "arr:nums": [
+            0
+          ],
+          "dp:table": [
+            0
+          ]
+        }
+      },
+      "before": {
+        "i": 0,
+        "nums[i]": 5,
+        "skip_current": 0,
+        "take_current": 5
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "第一间房之前没有历史选择，直接比较偷和不偷。"
+      },
+      "line": null,
+      "timestamp_ms": 1782698021086
+    },
+    {
+      "step": 3,
+      "event_type": "dp_write",
+      "message": "写入 dp[0] = 5（偷当前房）。",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "arr:nums",
+          "dp:table"
+        ],
+        "indices": {
+          "arr:nums": [
+            0
+          ],
+          "dp:table": [
+            0
+          ]
+        }
+      },
+      "before": {
+        "dp_idx": 0
+      },
+      "after": {
+        "dp_idx": 0,
+        "dp_val": 5,
+        "choice": "偷当前房"
+      },
+      "pedagogy": {
+        "why_now": "把当前最优结果记下来，后面的房屋会继续引用这个结果。"
+      },
+      "line": null,
+      "timestamp_ms": 1782698021086
+    },
+    {
+      "step": 4,
+      "event_type": "dp_read",
+      "message": "读取 dp[0]=5。第 1 间房如果要偷，就不能同时偷第 0 间。",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "arr:nums",
+          "dp:table"
+        ],
+        "indices": {
+          "arr:nums": [
+            1
+          ],
+          "dp:table": [
+            0,
+            1
+          ]
+        }
+      },
+      "before": {
+        "i": 1,
+        "nums[i]": 1,
+        "dp[i-1]": 5
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "两间相邻房只能选一边，所以第 1 格只需要和第 0 格比较。"
+      },
+      "line": null,
+      "timestamp_ms": 1782698021086
+    },
+    {
+      "step": 5,
+      "event_type": "choose_transition",
+      "message": "比较：跳过当前房得到 5；偷当前房得到 1。",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "arr:nums",
+          "dp:table"
+        ],
+        "indices": {
+          "arr:nums": [
+            1
+          ],
+          "dp:table": [
+            0,
+            1
+          ]
+        }
+      },
+      "before": {
+        "skip_current": 5,
+        "take_current": 1
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "DP 的选择不是'看到大数字就拿'，而是比较两条合法路线的总金额。"
+      },
+      "line": null,
+      "timestamp_ms": 1782698021086
+    },
+    {
+      "step": 6,
+      "event_type": "dp_write",
+      "message": "写入 dp[1] = 5（跳过当前房）。",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "arr:nums",
+          "dp:table"
+        ],
+        "indices": {
+          "arr:nums": [
+            1
+          ],
+          "dp:table": [
+            1
+          ]
+        }
+      },
+      "before": {
+        "dp_idx": 1
+      },
+      "after": {
+        "dp_idx": 1,
+        "dp_val": 5,
+        "choice": "跳过当前房"
+      },
+      "pedagogy": {
+        "why_now": "把当前最优结果记下来，后面的房屋会继续引用这个结果。"
+      },
+      "line": null,
+      "timestamp_ms": 1782698021086
+    },
+    {
+      "step": 7,
+      "event_type": "dp_read",
+      "message": "读取 dp[1]=5（跳过当前房）和 dp[0]=5（偷当前房前的安全位置）。",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "arr:nums",
+          "dp:table"
+        ],
+        "indices": {
+          "arr:nums": [
+            2
+          ],
+          "dp:table": [
+            0,
+            1,
+            2
+          ]
+        }
+      },
+      "before": {
+        "i": 2,
+        "nums[i]": 6,
+        "dp[i-2]": 5,
+        "dp[i-1]": 5
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "偷第 i 间房时，第 i-1 间必须跳过，所以只能加上 dp[i-2]。"
+      },
+      "line": null,
+      "timestamp_ms": 1782698021086
+    },
+    {
+      "step": 8,
+      "event_type": "choose_transition",
+      "message": "比较：跳过当前房得到 5；偷当前房得到 dp[0] + nums[2] = 5 + 6 = 11。",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "arr:nums",
+          "dp:table"
+        ],
+        "indices": {
+          "arr:nums": [
+            2
+          ],
+          "dp:table": [
+            0,
+            1,
+            2
+          ]
+        }
+      },
+      "before": {
+        "skip_current": 5,
+        "take_current": 11
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "每一格都保存到当前位置的最好结果，不需要记住具体偷了哪些房。"
+      },
+      "line": null,
+      "timestamp_ms": 1782698021086
+    },
+    {
+      "step": 9,
+      "event_type": "dp_write",
+      "message": "写入 dp[2] = 11（偷当前房）。",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "arr:nums",
+          "dp:table"
+        ],
+        "indices": {
+          "arr:nums": [
+            2
+          ],
+          "dp:table": [
+            2
+          ]
+        }
+      },
+      "before": {
+        "dp_idx": 2
+      },
+      "after": {
+        "dp_idx": 2,
+        "dp_val": 11,
+        "choice": "偷当前房"
+      },
+      "pedagogy": {
+        "why_now": "把当前最优结果记下来，后面的房屋会继续引用这个结果。"
+      },
+      "line": null,
+      "timestamp_ms": 1782698021086
+    },
+    {
+      "step": 10,
+      "event_type": "dp_read",
+      "message": "读取 dp[2]=11（跳过当前房）和 dp[1]=5（偷当前房前的安全位置）。",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "arr:nums",
+          "dp:table"
+        ],
+        "indices": {
+          "arr:nums": [
+            3
+          ],
+          "dp:table": [
+            1,
+            2,
+            3
+          ]
+        }
+      },
+      "before": {
+        "i": 3,
+        "nums[i]": 10,
+        "dp[i-2]": 5,
+        "dp[i-1]": 11
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "偷第 i 间房时，第 i-1 间必须跳过，所以只能加上 dp[i-2]。"
+      },
+      "line": null,
+      "timestamp_ms": 1782698021086
+    },
+    {
+      "step": 11,
+      "event_type": "choose_transition",
+      "message": "比较：跳过当前房得到 11；偷当前房得到 dp[1] + nums[3] = 5 + 10 = 15。",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "arr:nums",
+          "dp:table"
+        ],
+        "indices": {
+          "arr:nums": [
+            3
+          ],
+          "dp:table": [
+            1,
+            2,
+            3
+          ]
+        }
+      },
+      "before": {
+        "skip_current": 11,
+        "take_current": 15
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "每一格都保存到当前位置的最好结果，不需要记住具体偷了哪些房。"
+      },
+      "line": null,
+      "timestamp_ms": 1782698021086
+    },
+    {
+      "step": 12,
+      "event_type": "dp_write",
+      "message": "写入 dp[3] = 15（偷当前房）。",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "arr:nums",
+          "dp:table"
+        ],
+        "indices": {
+          "arr:nums": [
+            3
+          ],
+          "dp:table": [
+            3
+          ]
+        }
+      },
+      "before": {
+        "dp_idx": 3
+      },
+      "after": {
+        "dp_idx": 3,
+        "dp_val": 15,
+        "choice": "偷当前房"
+      },
+      "pedagogy": {
+        "why_now": "把当前最优结果记下来，后面的房屋会继续引用这个结果。"
+      },
+      "line": null,
+      "timestamp_ms": 1782698021086
+    },
+    {
+      "step": 13,
+      "event_type": "dp_read",
+      "message": "读取 dp[3]=15（跳过当前房）和 dp[2]=11（偷当前房前的安全位置）。",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "arr:nums",
+          "dp:table"
+        ],
+        "indices": {
+          "arr:nums": [
+            4
+          ],
+          "dp:table": [
+            2,
+            3,
+            4
+          ]
+        }
+      },
+      "before": {
+        "i": 4,
+        "nums[i]": 2,
+        "dp[i-2]": 11,
+        "dp[i-1]": 15
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "偷第 i 间房时，第 i-1 间必须跳过，所以只能加上 dp[i-2]。"
+      },
+      "line": null,
+      "timestamp_ms": 1782698021086
+    },
+    {
+      "step": 14,
+      "event_type": "choose_transition",
+      "message": "比较：跳过当前房得到 15；偷当前房得到 dp[2] + nums[4] = 11 + 2 = 13。",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "arr:nums",
+          "dp:table"
+        ],
+        "indices": {
+          "arr:nums": [
+            4
+          ],
+          "dp:table": [
+            2,
+            3,
+            4
+          ]
+        }
+      },
+      "before": {
+        "skip_current": 15,
+        "take_current": 13
+      },
+      "after": null,
+      "pedagogy": {
+        "why_now": "每一格都保存到当前位置的最好结果，不需要记住具体偷了哪些房。"
+      },
+      "line": null,
+      "timestamp_ms": 1782698021086
+    },
+    {
+      "step": 15,
+      "event_type": "dp_write",
+      "message": "写入 dp[4] = 15（跳过当前房）。",
+      "phase": "execute",
+      "highlight": {
+        "objects": [
+          "arr:nums",
+          "dp:table"
+        ],
+        "indices": {
+          "arr:nums": [
+            4
+          ],
+          "dp:table": [
+            4
+          ]
+        }
+      },
+      "before": {
+        "dp_idx": 4
+      },
+      "after": {
+        "dp_idx": 4,
+        "dp_val": 15,
+        "choice": "跳过当前房"
+      },
+      "pedagogy": {
+        "why_now": "把当前最优结果记下来，后面的房屋会继续引用这个结果。"
+      },
+      "line": null,
+      "timestamp_ms": 1782698021086
+    },
+    {
+      "step": 16,
+      "event_type": "return",
+      "message": "DP 表格填完，最后一格 dp[4] = 15，这就是最大金额。",
+      "phase": "execute",
+      "highlight": null,
+      "before": null,
+      "after": {
+        "result": 15
+      },
+      "pedagogy": {
+        "mental_model": "最后一格表示'看完所有房屋后，能拿到的最大金额'。"
+      },
+      "line": null,
+      "timestamp_ms": 1782698021086
+    }
+  ]
+}

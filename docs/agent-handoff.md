@@ -1,6 +1,6 @@
 # Agent Handoff
 
-Updated: 2026-06-27
+Updated: 2026-06-29
 
 This file is the short, current-state handoff for OpenCode session rollover. Keep it concise. Long history belongs in `docs/agent-session-log.md` if that file is created later.
 
@@ -23,6 +23,7 @@ Latest known stable baseline:
 
 ```text
 main has render-code and runtime-bound render-visual merged.
+0198 House Robber has been added with DP choose/skip trace and render-html demo.
 AGENTS.md contains the OpenCode Session Rollover Protocol.
 ```
 
@@ -52,6 +53,7 @@ Completed major milestones:
 - `learner_runtime.py` wraps harness execution with line-level trace collection.
 - `render_learner_html.py` generates the code execution viewer.
 - Demo gallery includes runtime-bound and code-viewer demos.
+- `0198_house_robber` adds the fifth problem and uses DP choose/skip semantic events.
 
 ## Current task
 
@@ -105,7 +107,7 @@ When updating this file, copy the newest visual conclusion here in one sentence.
 Current summary:
 
 ```text
-render-code UI has been iterated with user screenshots. Future UI changes still require visual review.
+House Robber render-html demo passed screenshot review on 2026-06-29; future UI changes still require visual review.
 ```
 
 ## Next action template
@@ -116,5 +118,5 @@ Replace this with the exact next instruction before switching sessions:
 Next action:
 1. Read AGENTS.md, README.md, docs/public-roadmap.md, docs/agent-handoff.md, and docs/visual-review.md.
 2. Run git status and latest tests.
-3. Continue only from the concrete task described here; do not infer hidden context from previous sessions.
+3. Continue from roadmap next items: tree adapter + binary tree level-order, or graph/grid Number of Islands.
 ```

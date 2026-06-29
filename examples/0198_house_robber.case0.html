@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>打家劫舍</title>
+<style>
+body{font-family:system-ui,-apple-system,sans-serif;max-width:900px;margin:2rem auto;padding:0 1rem;color:#1a1a1a;background:#fafafa}
+header{margin-bottom:2rem;padding-bottom:1rem;border-bottom:2px solid #e0e0e0}
+header h1{margin:0 0 .3rem;font-size:1.5rem}
+header .meta{color:#666;font-size:.9rem}
+h2{margin:1.5rem 0 .5rem;font-size:1.1rem;color:#444}
+.input-panel{margin-bottom:1.5rem}
+.array-row{display:flex;gap:4px;flex-wrap:wrap;margin:.5rem 0}
+.array-cell{width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:6px;font-weight:600;font-size:.9rem;background:#e8e8e8;color:#333;transition:background .2s}
+.array-cell.hl{background:#ffd54f;color:#333;box-shadow:0 0 0 2px #ff9800}
+.step{border-left:3px solid #e0e0e0;padding:.6rem 1rem;margin:.8rem 0;background:#fff;border-radius:0 6px 6px 0;transition:border-color .2s}
+.step:hover{border-color:#90caf9}
+.step-header{font-weight:600;color:#1565c0;margin-bottom:.2rem}
+.step-message{margin-bottom:.4rem}
+.state-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin:.4rem 0}
+.state-col{background:#f5f5f5;padding:.4rem .6rem;border-radius:4px;font-size:.85rem}
+.state-col h4{margin:0 0 .2rem;font-size:.8rem;color:#888;text-transform:uppercase}
+.state-kv{display:flex;gap:.3rem;flex-wrap:wrap}
+.state-kv span{background:#fff;padding:1px 6px;border-radius:3px;border:1px solid #e0e0e0}
+.pedagogy{margin:.3rem 0;padding:.3rem .6rem;border-radius:4px;font-size:.85rem}
+.pedagogy.why{background:#e3f2fd;color:#0d47a1}
+.pedagogy.model{background:#e8f5e9;color:#1b5e20}
+.highlight-tag{display:inline-block;background:#fff3e0;color:#e65100;padding:1px 6px;border-radius:3px;font-size:.8rem;margin-right:4px}
+footer{margin-top:2rem;padding:1rem;border-top:2px solid #e0e0e0;text-align:center}
+footer .status{font-size:1.1rem;font-weight:700}
+footer .status.passed{color:#2e7d32}
+footer .status.failed{color:#c62828}
+.ll-diagram{display:flex;align-items:center;gap:0;margin:1rem 0;overflow-x:auto;padding:.5rem 0}
+.ll-node{width:48px;height:48px;display:flex;align-items:center;justify-content:center;border:2px solid #90caf9;border-radius:8px;background:#e3f2fd;font-weight:700;font-size:.9rem;position:relative;flex-shrink:0}
+.ll-node.hl{background:#ffd54f;border-color:#ff9800;box-shadow:0 0 0 3px #ff9800}
+.ll-arrow{width:32px;height:2px;background:#bbb;position:relative;flex-shrink:0}
+.ll-arrow::after{content:'';position:absolute;right:-4px;top:-5px;border:6px solid transparent;border-left:8px solid #bbb}
+.ll-arrow.hl{background:#ff9800}
+.ll-arrow.hl::after{border-left-color:#ff9800}
+.ll-label{position:absolute;top:-22px;font-size:.7rem;color:#888;white-space:nowrap;left:50%;transform:translateX(-50%)}
+.ll-null{width:48px;height:48px;display:flex;align-items:center;justify-content:center;border:2px dashed #ccc;border-radius:8px;color:#999;font-size:.8rem;flex-shrink:0}
+.dp-table{display:flex;gap:4px;flex-wrap:wrap;margin:1rem 0;align-items:flex-end}
+.dp-cell{width:52px;min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;border:2px solid #e0e0e0;border-radius:6px;background:#fafafa;padding:4px;transition:all .2s}
+.dp-cell .dp-idx{font-size:.7rem;color:#999;margin-bottom:2px}
+.dp-cell .dp-house{font-size:.68rem;color:#777;margin-bottom:2px}
+.dp-cell .dp-val{font-weight:700;font-size:.95rem;color:#333;min-height:20px}
+.dp-cell.hl-read{background:#e3f2fd;border-color:#42a5f5;box-shadow:0 0 0 2px #90caf9}
+.dp-cell.hl-write{background:#fff3e0;border-color:#ff9800;box-shadow:0 0 0 2px #ffb74d}
+.dp-cell.filled{background:#e8f5e9;border-color:#66bb6a}
+
+</style>
+</head>
+<body>
+<header>
+  <h1>打家劫舍 <small>(0198_house_robber)</small></h1>
+  <div class="meta">标签: dynamic_programming &middot; 难度: MEDIUM</div>
+</header>
+<section class="input-panel"><h2>输入</h2>
+<div><strong>nums:</strong></div>
+<div class="array-row">
+<div class="array-cell" data-idx="0">5</div>
+<div class="array-cell" data-idx="1">1</div>
+<div class="array-cell" data-idx="2">6</div>
+<div class="array-cell" data-idx="3">10</div>
+<div class="array-cell" data-idx="4">2</div>
+</div>
+<div><strong>DP 表:</strong></div>
+<div class="dp-table">
+<div class="dp-cell filled" data-dp-idx="0"><span class="dp-idx">0</span><span class="dp-house">房屋金额 5</span><span class="dp-val">5</span></div>
+<div class="dp-cell filled" data-dp-idx="1"><span class="dp-idx">1</span><span class="dp-house">房屋金额 1</span><span class="dp-val">5</span></div>
+<div class="dp-cell filled" data-dp-idx="2"><span class="dp-idx">2</span><span class="dp-house">房屋金额 6</span><span class="dp-val">11</span></div>
+<div class="dp-cell filled" data-dp-idx="3"><span class="dp-idx">3</span><span class="dp-house">房屋金额 10</span><span class="dp-val">15</span></div>
+<div class="dp-cell filled" data-dp-idx="4"><span class="dp-idx">4</span><span class="dp-house">房屋金额 2</span><span class="dp-val">15</span></div>
+</div>
+</section>
+<section class="timeline"><h2>执行过程</h2>
+<div class="step" data-step="1">
+  <div class="step-header">Step 1 &middot; dp_init</div>
+  <div class="step-message">创建 DP 表格：共有 5 间房。dp[i] 表示看完第 i 间房后，最多能拿多少钱。</div>
+  <div class="state-grid">
+    <div class="state-col"><h4>before</h4><div class="state-kv">
+<span>nums=[5, 1, 6, 10, 2]</span>
+    </div></div>
+    <div class="state-col"><h4>after</h4><div class="state-kv">
+    </div></div>
+  </div>
+  <div><span class="highlight-tag">高亮: {&quot;objects&quot;: [&quot;arr:nums&quot;, &quot;dp:table&quot;], &quot;indices&quot;: {&quot;arr:nums&quot;: [0], &quot;dp:table&quot;: [0]}}</span></div>
+  <div class="pedagogy why">💡 先把输入排成一排，再从左到右填 DP 表格。</div>
+  <div class="pedagogy model">🧠 每到一间房，都只做一个选择：跳过它，或者偷它。因为相邻房子不能同时选，偷当前房时只能接在 dp[i-2] 后面。</div>
+</div>
+<div class="step" data-step="2">
+  <div class="step-header">Step 2 &middot; choose_transition</div>
+  <div class="step-message">第 0 间房没有左邻选择冲突：偷它可以拿 5，跳过是 0。</div>
+  <div class="state-grid">
+    <div class="state-col"><h4>before</h4><div class="state-kv">
+<span>i=0</span>
+<span>nums[i]=5</span>
+<span>skip_current=0</span>
+<span>take_current=5</span>
+    </div></div>
+    <div class="state-col"><h4>after</h4><div class="state-kv">
+    </div></div>
+  </div>
+  <div><span class="highlight-tag">高亮: {&quot;objects&quot;: [&quot;arr:nums&quot;, &quot;dp:table&quot;], &quot;indices&quot;: {&quot;arr:nums&quot;: [0], &quot;dp:table&quot;: [0]}}</span></div>
+  <div class="pedagogy why">💡 第一间房之前没有历史选择，直接比较偷和不偷。</div>
+</div>
+<div class="step" data-step="3">
+  <div class="step-header">Step 3 &middot; dp_write</div>
+  <div class="step-message">写入 dp[0] = 5（偷当前房）。</div>
+  <div class="state-grid">
+    <div class="state-col"><h4>before</h4><div class="state-kv">
+<span>dp_idx=0</span>
+    </div></div>
+    <div class="state-col"><h4>after</h4><div class="state-kv">
+<span>dp_idx=0</span>
+<span>dp_val=5</span>
+<span>choice=&#x27;偷当前房&#x27;</span>
+    </div></div>
+  </div>
+  <div><span class="highlight-tag">高亮: {&quot;objects&quot;: [&quot;arr:nums&quot;, &quot;dp:table&quot;], &quot;indices&quot;: {&quot;arr:nums&quot;: [0], &quot;dp:table&quot;: [0]}}</span></div>
+  <div class="pedagogy why">💡 把当前最优结果记下来，后面的房屋会继续引用这个结果。</div>
+</div>
+<div class="step" data-step="4">
+  <div class="step-header">Step 4 &middot; dp_read</div>
+  <div class="step-message">读取 dp[0]=5。第 1 间房如果要偷，就不能同时偷第 0 间。</div>
+  <div class="state-grid">
+    <div class="state-col"><h4>before</h4><div class="state-kv">
+<span>i=1</span>
+<span>nums[i]=1</span>
+<span>dp[i-1]=5</span>
+    </div></div>
+    <div class="state-col"><h4>after</h4><div class="state-kv">
+    </div></div>
+  </div>
+  <div><span class="highlight-tag">高亮: {&quot;objects&quot;: [&quot;arr:nums&quot;, &quot;dp:table&quot;], &quot;indices&quot;: {&quot;arr:nums&quot;: [1], &quot;dp:table&quot;: [0, 1]}}</span></div>
+  <div class="pedagogy why">💡 两间相邻房只能选一边，所以第 1 格只需要和第 0 格比较。</div>
+</div>
+<div class="step" data-step="5">
+  <div class="step-header">Step 5 &middot; choose_transition</div>
+  <div class="step-message">比较：跳过当前房得到 5；偷当前房得到 1。</div>
+  <div class="state-grid">
+    <div class="state-col"><h4>before</h4><div class="state-kv">
+<span>skip_current=5</span>
+<span>take_current=1</span>
+    </div></div>
+    <div class="state-col"><h4>after</h4><div class="state-kv">
+    </div></div>
+  </div>
+  <div><span class="highlight-tag">高亮: {&quot;objects&quot;: [&quot;arr:nums&quot;, &quot;dp:table&quot;], &quot;indices&quot;: {&quot;arr:nums&quot;: [1], &quot;dp:table&quot;: [0, 1]}}</span></div>
+  <div class="pedagogy why">💡 DP 的选择不是&#x27;看到大数字就拿&#x27;，而是比较两条合法路线的总金额。</div>
+</div>
+<div class="step" data-step="6">
+  <div class="step-header">Step 6 &middot; dp_write</div>
+  <div class="step-message">写入 dp[1] = 5（跳过当前房）。</div>
+  <div class="state-grid">
+    <div class="state-col"><h4>before</h4><div class="state-kv">
+<span>dp_idx=1</span>
+    </div></div>
+    <div class="state-col"><h4>after</h4><div class="state-kv">
+<span>dp_idx=1</span>
+<span>dp_val=5</span>
+<span>choice=&#x27;跳过当前房&#x27;</span>
+    </div></div>
+  </div>
+  <div><span class="highlight-tag">高亮: {&quot;objects&quot;: [&quot;arr:nums&quot;, &quot;dp:table&quot;], &quot;indices&quot;: {&quot;arr:nums&quot;: [1], &quot;dp:table&quot;: [1]}}</span></div>
+  <div class="pedagogy why">💡 把当前最优结果记下来，后面的房屋会继续引用这个结果。</div>
+</div>
+<div class="step" data-step="7">
+  <div class="step-header">Step 7 &middot; dp_read</div>
+  <div class="step-message">读取 dp[1]=5（跳过当前房）和 dp[0]=5（偷当前房前的安全位置）。</div>
+  <div class="state-grid">
+    <div class="state-col"><h4>before</h4><div class="state-kv">
+<span>i=2</span>
+<span>nums[i]=6</span>
+<span>dp[i-2]=5</span>
+<span>dp[i-1]=5</span>
+    </div></div>
+    <div class="state-col"><h4>after</h4><div class="state-kv">
+    </div></div>
+  </div>
+  <div><span class="highlight-tag">高亮: {&quot;objects&quot;: [&quot;arr:nums&quot;, &quot;dp:table&quot;], &quot;indices&quot;: {&quot;arr:nums&quot;: [2], &quot;dp:table&quot;: [0, 1, 2]}}</span></div>
+  <div class="pedagogy why">💡 偷第 i 间房时，第 i-1 间必须跳过，所以只能加上 dp[i-2]。</div>
+</div>
+<div class="step" data-step="8">
+  <div class="step-header">Step 8 &middot; choose_transition</div>
+  <div class="step-message">比较：跳过当前房得到 5；偷当前房得到 dp[0] + nums[2] = 5 + 6 = 11。</div>
+  <div class="state-grid">
+    <div class="state-col"><h4>before</h4><div class="state-kv">
+<span>skip_current=5</span>
+<span>take_current=11</span>
+    </div></div>
+    <div class="state-col"><h4>after</h4><div class="state-kv">
+    </div></div>
+  </div>
+  <div><span class="highlight-tag">高亮: {&quot;objects&quot;: [&quot;arr:nums&quot;, &quot;dp:table&quot;], &quot;indices&quot;: {&quot;arr:nums&quot;: [2], &quot;dp:table&quot;: [0, 1, 2]}}</span></div>
+  <div class="pedagogy why">💡 每一格都保存到当前位置的最好结果，不需要记住具体偷了哪些房。</div>
+</div>
+<div class="step" data-step="9">
+  <div class="step-header">Step 9 &middot; dp_write</div>
+  <div class="step-message">写入 dp[2] = 11（偷当前房）。</div>
+  <div class="state-grid">
+    <div class="state-col"><h4>before</h4><div class="state-kv">
+<span>dp_idx=2</span>
+    </div></div>
+    <div class="state-col"><h4>after</h4><div class="state-kv">
+<span>dp_idx=2</span>
+<span>dp_val=11</span>
+<span>choice=&#x27;偷当前房&#x27;</span>
+    </div></div>
+  </div>
+  <div><span class="highlight-tag">高亮: {&quot;objects&quot;: [&quot;arr:nums&quot;, &quot;dp:table&quot;], &quot;indices&quot;: {&quot;arr:nums&quot;: [2], &quot;dp:table&quot;: [2]}}</span></div>
+  <div class="pedagogy why">💡 把当前最优结果记下来，后面的房屋会继续引用这个结果。</div>
+</div>
+<div class="step" data-step="10">
+  <div class="step-header">Step 10 &middot; dp_read</div>
+  <div class="step-message">读取 dp[2]=11（跳过当前房）和 dp[1]=5（偷当前房前的安全位置）。</div>
+  <div class="state-grid">
+    <div class="state-col"><h4>before</h4><div class="state-kv">
+<span>i=3</span>
+<span>nums[i]=10</span>
+<span>dp[i-2]=5</span>
+<span>dp[i-1]=11</span>
+    </div></div>
+    <div class="state-col"><h4>after</h4><div class="state-kv">
+    </div></div>
+  </div>
+  <div><span class="highlight-tag">高亮: {&quot;objects&quot;: [&quot;arr:nums&quot;, &quot;dp:table&quot;], &quot;indices&quot;: {&quot;arr:nums&quot;: [3], &quot;dp:table&quot;: [1, 2, 3]}}</span></div>
+  <div class="pedagogy why">💡 偷第 i 间房时，第 i-1 间必须跳过，所以只能加上 dp[i-2]。</div>
+</div>
+<div class="step" data-step="11">
+  <div class="step-header">Step 11 &middot; choose_transition</div>
+  <div class="step-message">比较：跳过当前房得到 11；偷当前房得到 dp[1] + nums[3] = 5 + 10 = 15。</div>
+  <div class="state-grid">
+    <div class="state-col"><h4>before</h4><div class="state-kv">
+<span>skip_current=11</span>
+<span>take_current=15</span>
+    </div></div>
+    <div class="state-col"><h4>after</h4><div class="state-kv">
+    </div></div>
+  </div>
+  <div><span class="highlight-tag">高亮: {&quot;objects&quot;: [&quot;arr:nums&quot;, &quot;dp:table&quot;], &quot;indices&quot;: {&quot;arr:nums&quot;: [3], &quot;dp:table&quot;: [1, 2, 3]}}</span></div>
+  <div class="pedagogy why">💡 每一格都保存到当前位置的最好结果，不需要记住具体偷了哪些房。</div>
+</div>
+<div class="step" data-step="12">
+  <div class="step-header">Step 12 &middot; dp_write</div>
+  <div class="step-message">写入 dp[3] = 15（偷当前房）。</div>
+  <div class="state-grid">
+    <div class="state-col"><h4>before</h4><div class="state-kv">
+<span>dp_idx=3</span>
+    </div></div>
+    <div class="state-col"><h4>after</h4><div class="state-kv">
+<span>dp_idx=3</span>
+<span>dp_val=15</span>
+<span>choice=&#x27;偷当前房&#x27;</span>
+    </div></div>
+  </div>
+  <div><span class="highlight-tag">高亮: {&quot;objects&quot;: [&quot;arr:nums&quot;, &quot;dp:table&quot;], &quot;indices&quot;: {&quot;arr:nums&quot;: [3], &quot;dp:table&quot;: [3]}}</span></div>
+  <div class="pedagogy why">💡 把当前最优结果记下来，后面的房屋会继续引用这个结果。</div>
+</div>
+<div class="step" data-step="13">
+  <div class="step-header">Step 13 &middot; dp_read</div>
+  <div class="step-message">读取 dp[3]=15（跳过当前房）和 dp[2]=11（偷当前房前的安全位置）。</div>
+  <div class="state-grid">
+    <div class="state-col"><h4>before</h4><div class="state-kv">
+<span>i=4</span>
+<span>nums[i]=2</span>
+<span>dp[i-2]=11</span>
+<span>dp[i-1]=15</span>
+    </div></div>
+    <div class="state-col"><h4>after</h4><div class="state-kv">
+    </div></div>
+  </div>
+  <div><span class="highlight-tag">高亮: {&quot;objects&quot;: [&quot;arr:nums&quot;, &quot;dp:table&quot;], &quot;indices&quot;: {&quot;arr:nums&quot;: [4], &quot;dp:table&quot;: [2, 3, 4]}}</span></div>
+  <div class="pedagogy why">💡 偷第 i 间房时，第 i-1 间必须跳过，所以只能加上 dp[i-2]。</div>
+</div>
+<div class="step" data-step="14">
+  <div class="step-header">Step 14 &middot; choose_transition</div>
+  <div class="step-message">比较：跳过当前房得到 15；偷当前房得到 dp[2] + nums[4] = 11 + 2 = 13。</div>
+  <div class="state-grid">
+    <div class="state-col"><h4>before</h4><div class="state-kv">
+<span>skip_current=15</span>
+<span>take_current=13</span>
+    </div></div>
+    <div class="state-col"><h4>after</h4><div class="state-kv">
+    </div></div>
+  </div>
+  <div><span class="highlight-tag">高亮: {&quot;objects&quot;: [&quot;arr:nums&quot;, &quot;dp:table&quot;], &quot;indices&quot;: {&quot;arr:nums&quot;: [4], &quot;dp:table&quot;: [2, 3, 4]}}</span></div>
+  <div class="pedagogy why">💡 每一格都保存到当前位置的最好结果，不需要记住具体偷了哪些房。</div>
+</div>
+<div class="step" data-step="15">
+  <div class="step-header">Step 15 &middot; dp_write</div>
+  <div class="step-message">写入 dp[4] = 15（跳过当前房）。</div>
+  <div class="state-grid">
+    <div class="state-col"><h4>before</h4><div class="state-kv">
+<span>dp_idx=4</span>
+    </div></div>
+    <div class="state-col"><h4>after</h4><div class="state-kv">
+<span>dp_idx=4</span>
+<span>dp_val=15</span>
+<span>choice=&#x27;跳过当前房&#x27;</span>
+    </div></div>
+  </div>
+  <div><span class="highlight-tag">高亮: {&quot;objects&quot;: [&quot;arr:nums&quot;, &quot;dp:table&quot;], &quot;indices&quot;: {&quot;arr:nums&quot;: [4], &quot;dp:table&quot;: [4]}}</span></div>
+  <div class="pedagogy why">💡 把当前最优结果记下来，后面的房屋会继续引用这个结果。</div>
+</div>
+<div class="step" data-step="16">
+  <div class="step-header">Step 16 &middot; return</div>
+  <div class="step-message">DP 表格填完，最后一格 dp[4] = 15，这就是最大金额。</div>
+  <div class="state-grid">
+    <div class="state-col"><h4>before</h4><div class="state-kv">
+    </div></div>
+    <div class="state-col"><h4>after</h4><div class="state-kv">
+<span>result=15</span>
+    </div></div>
+  </div>
+  <div class="pedagogy model">🧠 最后一格表示&#x27;看完所有房屋后，能拿到的最大金额&#x27;。</div>
+</div>
+</section>
+<footer>
+  <div class="status passed">结果: 通过 ✓</div>
+  <div>实际: 15 &middot; 预期: 15</div>
+</footer>
+<script>
+(function(){
+  var arrHl={"1": [0], "2": [0], "3": [0], "4": [1], "5": [1], "6": [1], "7": [2], "8": [2], "9": [2], "10": [3], "11": [3], "12": [3], "13": [4], "14": [4], "15": [4]};
+  var llHl={};
+  var dpHl={"1": [0], "2": [0], "3": [0], "4": [0, 1], "5": [0, 1], "6": [1], "7": [0, 1, 2], "8": [0, 1, 2], "9": [2], "10": [1, 2, 3], "11": [1, 2, 3], "12": [3], "13": [2, 3, 4], "14": [2, 3, 4], "15": [4]};
+  var steps=document.querySelectorAll('.step');
+  var cells=document.querySelectorAll('.array-cell');
+  var nodes=document.querySelectorAll('.ll-node');
+  var dpCells=document.querySelectorAll('.dp-cell');
+  function clear(){
+    for(var i=0;i<cells.length;i++)cells[i].classList.remove('hl');
+    for(var i=0;i<nodes.length;i++)nodes[i].classList.remove('hl');
+    for(var i=0;i<dpCells.length;i++)dpCells[i].classList.remove('hl-read','hl-write');
+  }
+  for(var i=0;i<steps.length;i++){
+    steps[i].addEventListener('mouseenter',function(){
+      clear();
+      var s=parseInt(this.getAttribute('data-step'));
+      var aIdxs=arrHl[s];
+      if(aIdxs)for(var j=0;j<aIdxs.length;j++){
+        var c=document.querySelector('.array-cell[data-idx="'+aIdxs[j]+'"]');
+        if(c)c.classList.add('hl');
+      }
+      var lIdxs=llHl[s];
+      if(lIdxs)for(var j=0;j<lIdxs.length;j++){
+        var n=document.querySelector('.ll-node[data-ll-idx="'+lIdxs[j]+'"]');
+        if(n)n.classList.add('hl');
+      }
+      var dIdxs=dpHl[s];
+      if(dIdxs){
+        for(var j=0;j<dIdxs.length;j++){
+          var dc=document.querySelector('.dp-cell[data-dp-idx="'+dIdxs[j]+'"]');
+          if(dc){
+            if(j<dIdxs.length-1)dc.classList.add('hl-read');
+            else dc.classList.add('hl-write');
+          }
+        }
+      }
+    });
+    steps[i].addEventListener('mouseleave',clear);
+  }
+})();
+</script>
+</body>
+</html>

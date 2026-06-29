@@ -1,0 +1,32 @@
+[
+  {
+    "name": "best choice skips a tempting neighbor",
+    "args": {"nums": [5, 1, 6, 10, 2]},
+    "expected": 15,
+    "notes": "选择第 0 间和第 3 间，金额 5 + 10 = 15。"
+  },
+  {
+    "name": "alternating strong houses",
+    "args": {"nums": [8, 2, 9, 3, 1]},
+    "expected": 18,
+    "notes": "第 0、2、4 间互不相邻，金额 8 + 9 + 1 = 18。"
+  },
+  {
+    "name": "late house changes the answer",
+    "args": {"nums": [2, 9, 1, 8, 3, 7]},
+    "expected": 24,
+    "notes": "第 1、3、5 间互不相邻，金额 9 + 8 + 7 = 24。"
+  },
+  {
+    "name": "single house",
+    "args": {"nums": [4]},
+    "expected": 4,
+    "notes": "只有一间房，能拿到的最大金额就是这间房的金额。"
+  },
+  {
+    "name": "choose larger of two neighbors",
+    "args": {"nums": [3, 10]},
+    "expected": 10,
+    "notes": "两间房相邻，不能都选，只能拿金额更大的第二间。"
+  }
+]

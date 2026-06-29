@@ -209,6 +209,49 @@ class TestRenderHtmlDP(unittest.TestCase):
         html_out = render_trace_to_html(DP_TRACE)
         self.assertIn("filled", html_out, "Base cases should be pre-filled")
 
+    def test_array_dp_table_uses_nums_length_and_zero_index_write(self):
+        trace = {
+            "trace_version": "0.1.0",
+            "problem": {
+                "problem_id": "0198_test",
+                "display_title": "Test House Robber",
+                "pattern_tags": ["dynamic_programming"],
+                "difficulty": "medium",
+            },
+            "run": {
+                "language": "python",
+                "entry": {"class_name": "S", "method_name": "rob"},
+                "input": {"nums": [2, 7, 9]},
+                "expected": 11,
+                "actual": 11,
+                "status": "passed",
+                "total_steps": 3,
+                "truncated": False,
+            },
+            "events": [
+                {
+                    "step": 1,
+                    "event_type": "dp_write",
+                    "message": "写入 dp[0] = 2",
+                    "highlight": {"objects": ["dp:table"], "indices": {"dp:table": [0]}},
+                    "after": {"dp_idx": 0, "dp_val": 2},
+                },
+                {
+                    "step": 2,
+                    "event_type": "dp_write",
+                    "message": "写入 dp[1] = 7",
+                    "highlight": {"objects": ["dp:table"], "indices": {"dp:table": [1]}},
+                    "after": {"dp_idx": 1, "dp_val": 7},
+                },
+            ],
+        }
+        html_out = render_trace_to_html(trace)
+        self.assertIn("dp-table", html_out)
+        self.assertEqual(html_out.count('<div class="dp-cell'), 3)
+        self.assertIn("房屋金额", html_out)
+        self.assertIn('data-dp-idx="0"', html_out)
+        self.assertIn(">2<", html_out)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -138,3 +138,70 @@ Issues:
 Recommendation:
 
 Commit with message: `feat: add local LeetCode-style code runner with split-panel UI and execution viewer`
+
+## 2026-06-29 — House Robber render-html demo
+
+Page:
+`examples/0198_house_robber.case0.html`
+
+Reviewer:
+Codex via `agent-browser` screenshot review
+
+Screenshot:
+`/tmp/pv_house_robber_case0_full.png`
+
+Result:
+PASS
+
+Findings:
+
+- P0: none
+- P1: none
+- P2: generic highlight metadata is still shown as raw JSON, inherited from the existing trace renderer.
+
+Fixed:
+
+- Reordered House Robber cases so case 0 demonstrates the full choose/skip DP flow instead of the single-house boundary case.
+- Regenerated `trace.case0.json`, `trace.sample.json`, and `examples/0198_house_robber.case0.html`.
+
+Remaining:
+
+- Optional future polish: render highlight metadata as friendly labels instead of raw JSON.
+
+Next:
+
+- Run the full unittest suite before final handoff.
+
+## 2026-06-29 — render-code replay control
+
+Page:
+`examples/code_0001_two_sum.case0.html`
+
+Reviewer:
+Codex via `agent-browser` DOM verification
+
+Result:
+PASS
+
+Findings:
+
+- P0: none
+- P1: none
+- P2: none
+
+Fixed:
+
+- Play now restarts from the beginning when clicked after execution has reached the final step.
+
+Verification:
+
+- First playback reached `10 / 10`.
+- Clicking Play again advanced from the restarted run to `1 / 10`.
+
+Remaining:
+
+- none
+
+Next:
+
+- Run the full unittest suite before final handoff.

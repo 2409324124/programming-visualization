@@ -133,6 +133,16 @@ class TestRenderCodeHtml(unittest.TestCase):
         html = render_learner_to_html(runtime)
         self.assertIn("Function returned here", html)
 
+    def test_play_restarts_after_completion(self):
+        """Clicking Play at the final step should replay from the beginning."""
+        from pv.learner_runtime import get_learner_runtime
+        from pv.render_learner_html import render_learner_to_html
+        runtime = get_learner_runtime(TWO_SUM_DIR, self.sol_path, 0)
+        html = render_learner_to_html(runtime)
+        self.assertIn("if (currentStep >= totalSteps)", html)
+        self.assertIn("currentStep = 0", html)
+        self.assertIn("highlightStep(currentStep)", html)
+
 
 if __name__ == "__main__":
     unittest.main()

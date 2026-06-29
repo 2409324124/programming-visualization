@@ -168,6 +168,10 @@ document.getElementById('btn-next').onclick = function() {{ if (currentStep < to
 document.getElementById('btn-play').onclick = function() {{
   if (playing) {{ clearInterval(timer); playing = false; this.textContent = '\\u25B6 Play'; }}
   else {{ playing = true; this.textContent = '\\u23F8 Pause';
+    if (currentStep >= totalSteps) {{
+      currentStep = 0;
+      highlightStep(currentStep);
+    }}
     var self = this;
     timer = setInterval(function() {{
       if (currentStep < totalSteps) {{ currentStep++; highlightStep(currentStep); }}
