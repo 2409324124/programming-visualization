@@ -389,6 +389,22 @@ class TestMainPageHTML(unittest.TestCase):
         self.assertIn("validation-summary", _MAIN_PAGE_HTML)
         self.assertIn("function renderValidationSummary", _MAIN_PAGE_HTML)
 
+    def test_execution_viewer_has_stable_shell(self):
+        self.assertIn('class="viewer-shell"', _MAIN_PAGE_HTML)
+        self.assertIn(".right{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;min-width:0}", _MAIN_PAGE_HTML)
+        self.assertIn(".viewer-shell{flex:1 1 auto;min-height:0;display:flex;overflow:hidden}", _MAIN_PAGE_HTML)
+        self.assertIn("#viewer-frame{flex:1 1 auto;border:none;width:100%;height:100%;min-height:0;display:block}", _MAIN_PAGE_HTML)
+
+    def test_single_run_restores_execution_viewer(self):
+        self.assertIn("frame.style.display = 'block';", _MAIN_PAGE_HTML)
+        self.assertIn("empty.style.display = 'none';", _MAIN_PAGE_HTML)
+        self.assertIn("frame.srcdoc = data.html;", _MAIN_PAGE_HTML)
+
+    def test_batch_validation_is_summary_only(self):
+        self.assertIn("Validation summary is shown in the left panel.", _MAIN_PAGE_HTML)
+        self.assertIn("frame.style.display = 'none';", _MAIN_PAGE_HTML)
+        self.assertIn("frame.srcdoc = '';", _MAIN_PAGE_HTML)
+
 
 class TestTimeoutConfig(unittest.TestCase):
     """Verify timeout and request size constants exist."""

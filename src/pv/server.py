@@ -525,9 +525,9 @@ _MAIN_PAGE_HTML = """<!DOCTYPE html>
 <title>Programming Visualization — Local Runner</title>
 <style>
 *{box-sizing:border-box}
-body{font-family:system-ui,sans-serif;background:#1e1e1e;color:#d4d4d4;margin:0;padding:0;height:100vh;display:flex;flex-direction:column}
-#app{display:flex;flex:1;overflow:hidden}
-.left{width:420px;min-width:340px;display:flex;flex-direction:column;background:#252526;border-right:1px solid #333;padding:1rem;gap:.7rem;overflow-y:auto}
+body{font-family:system-ui,sans-serif;background:#1e1e1e;color:#d4d4d4;margin:0;padding:0;height:100vh;min-height:0;display:flex;flex-direction:column}
+#app{display:flex;flex:1;min-height:0;overflow:hidden}
+.left{width:420px;min-width:340px;display:flex;flex-direction:column;background:#252526;border-right:1px solid #333;padding:1rem;gap:.7rem;overflow-y:auto;min-height:0}
 .left h2{font-size:.95rem;margin:0;color:#ccc}
 .left label{font-size:.75rem;color:#888;margin-bottom:-.4rem}
 select,button{padding:.4rem .7rem;border:1px solid #555;border-radius:4px;background:#333;color:#ccc;font-size:.82rem;cursor:pointer}
@@ -543,12 +543,13 @@ button:disabled{opacity:.4;cursor:default}
 .tag.error{background:#e65100;color:#ffe0b2}
 .tag.running{background:#0d47a1;color:#90caf9}
 #error-msg{font-size:.75rem;color:#ef9a9a;word-break:break-all}
-.right{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.right{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;min-width:0}
 .right-header{background:#252526;padding:.5rem 1rem;border-bottom:1px solid #333;display:flex;align-items:center;gap:.8rem;min-height:36px}
 .right-header h3{font-size:.85rem;margin:0;color:#ccc}
 #actual-expected{font-size:.75rem;color:#888}
-#viewer-frame{flex:1;border:none;width:100%}
-#empty-state{flex:1;display:flex;align-items:center;justify-content:center;color:#666;font-size:.9rem}
+.viewer-shell{flex:1 1 auto;min-height:0;display:flex;overflow:hidden}
+#viewer-frame{flex:1 1 auto;border:none;width:100%;height:100%;min-height:0;display:block}
+#empty-state{flex:1 1 auto;display:flex;align-items:center;justify-content:center;color:#666;font-size:.9rem}
 #empty-state p{text-align:center;line-height:1.6}
 .action-row{display:flex;gap:.45rem;flex-wrap:wrap}
 .action-row button{flex:1;min-width:120px}
@@ -558,7 +559,11 @@ button:disabled{opacity:.4;cursor:default}
 .field .k{font-size:.7rem;color:#888;margin-bottom:.15rem}
 .field .v{font-family:'Cascadia Code','Fira Code',monospace;font-size:.74rem;white-space:pre-wrap;word-break:break-word;color:#d4d4d4;margin:0}
 #case-preview{max-height:210px;overflow:auto}
-#validation-summary{max-height:220px;overflow:auto}
+#validation-summary{max-height:160px;overflow:auto}
+.summary-line{display:flex;gap:.55rem;align-items:center;flex-wrap:wrap;font-size:.78rem}
+.summary-line strong{color:#d4d4d4}
+.summary-details{margin-top:.35rem}
+.summary-details summary{cursor:pointer;color:#aaa;font-size:.74rem}
 </style>
 </head>
 <body>
@@ -594,8 +599,10 @@ button:disabled{opacity:.4;cursor:default}
     <h3>Execution Viewer</h3>
     <span id="actual-expected"></span>
   </div>
-  <div id="empty-state"><p>Select a problem, edit your code, then click <strong>Run</strong> to see the execution trace.</p></div>
-  <iframe id="viewer-frame" style="display:none"></iframe>
+  <div class="viewer-shell">
+    <div id="empty-state"><p>Select a problem, edit your code, then click <strong>Run</strong> to see the execution trace.</p></div>
+    <iframe id="viewer-frame" style="display:none"></iframe>
+  </div>
 </div>
 </div>
 <script>
@@ -712,12 +719,13 @@ function renderCurrentCaseSummary(rt) {
   var status = rt.error ? 'ERROR' : (rt.passed ? 'PASSED' : 'FAILED');
   document.getElementById('validation-summary').innerHTML =
     '<h3>Current Case Result</h3>' +
-    '<div class="field"><div class="k">Status</div><pre class="v">' + status + '</pre></div>' +
-    '<div class="field"><div class="k">Problem</div><pre class="v">' + (rt.problem_id || '') + '</pre></div>' +
-    '<div class="field"><div class="k">Case</div><pre class="v">' + rt.case_index + ' / ' + (rt.case_name || '') + '</pre></div>' +
+    '<div class="summary-line"><strong>' + status + '</strong><span>' + (rt.problem_id || '') + '</span><span>Case ' + rt.case_index + ' / ' + (rt.case_name || '') + '</span></div>' +
+    '<div class="summary-line"><span>actual=' + formatValue(rt.actual) + '</span><span>expected=' + formatValue(rt.expected) + '</span></div>' +
+    '<details class="summary-details"><summary>Input and details</summary>' +
     '<div class="field"><div class="k">Input</div><pre class="v">' + formatValue(rt.input) + '</pre></div>' +
     '<div class="field"><div class="k">Actual</div><pre class="v">' + formatValue(rt.actual) + '</pre></div>' +
-    '<div class="field"><div class="k">Expected</div><pre class="v">' + formatValue(rt.expected) + '</pre></div>';
+    '<div class="field"><div class="k">Expected</div><pre class="v">' + formatValue(rt.expected) + '</pre></div>' +
+    '</details>';
 }
 
 function renderValidationSummary(summary, title) {
