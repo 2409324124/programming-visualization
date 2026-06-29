@@ -8,6 +8,8 @@ from pathlib import Path
 
 from pv.server import (
     render_code_request,
+    run_all_fixed_cases_request,
+    run_generated_checks_request,
     scan_problems,
     problem_detail,
     _MAIN_PAGE_HTML,
@@ -241,6 +243,79 @@ class Solution:
                          f"New items in problems dir: {new_items}")
 
 
+class TestRunnerTrustLayer(unittest.TestCase):
+    """Test runner validation summaries without starting a server."""
+
+    TWO_SUM_CORRECT = TestRenderCodeRequest.TWO_SUM_CORRECT
+    TWO_SUM_BUG = TestRenderCodeRequest.TWO_SUM_BUG
+
+    def test_all_fixed_cases_summary_passes(self):
+        result = run_all_fixed_cases_request({
+            "problem_id": "0001_two_sum",
+            "code": self.TWO_SUM_CORRECT,
+        })
+
+        self.assertTrue(result["ok"], result.get("error"))
+        summary = result["summary"]
+        self.assertTrue(summary["passed"])
+        self.assertEqual(summary["passed_count"], 4)
+        self.assertEqual(summary["total_count"], 4)
+        self.assertIsNone(summary["first_failure"])
+
+    def test_all_fixed_cases_reports_first_failure(self):
+        result = run_all_fixed_cases_request({
+            "problem_id": "0001_two_sum",
+            "code": self.TWO_SUM_BUG,
+        })
+
+        self.assertTrue(result["ok"], result.get("error"))
+        summary = result["summary"]
+        self.assertFalse(summary["passed"])
+        failure = summary["first_failure"]
+        self.assertIsNotNone(failure)
+        self.assertEqual(failure["source"], "fixed")
+        self.assertIn("input", failure)
+        self.assertIn("expected", failure)
+        self.assertIn("actual", failure)
+        self.assertIn("error", failure)
+
+    def test_generated_checks_summary_passes(self):
+        result = run_generated_checks_request({
+            "problem_id": "0001_two_sum",
+            "code": self.TWO_SUM_CORRECT,
+            "generated": 20,
+            "seed": 0,
+        })
+
+        self.assertTrue(result["ok"], result.get("error"))
+        summary = result["summary"]
+        self.assertTrue(summary["passed"])
+        self.assertEqual(summary["fixed"]["passed"], 4)
+        self.assertEqual(summary["fixed"]["total"], 4)
+        self.assertEqual(summary["generated"]["passed"], 20)
+        self.assertEqual(summary["generated"]["total"], 20)
+        self.assertIsNone(summary["first_failure"])
+
+    def test_generated_checks_reports_first_failure(self):
+        result = run_generated_checks_request({
+            "problem_id": "0001_two_sum",
+            "code": self.TWO_SUM_BUG,
+            "generated": 20,
+            "seed": 0,
+        })
+
+        self.assertTrue(result["ok"], result.get("error"))
+        summary = result["summary"]
+        self.assertFalse(summary["passed"])
+        failure = summary["first_failure"]
+        self.assertIsNotNone(failure)
+        self.assertIn(failure["source"], {"fixed", "generated"})
+        self.assertIn("input", failure)
+        self.assertIn("expected", failure)
+        self.assertIn("actual", failure)
+        self.assertIn("message", failure)
+
+
 class TestMainPageHTML(unittest.TestCase):
     """Validate the main page HTML."""
 
@@ -291,6 +366,28 @@ class TestMainPageHTML(unittest.TestCase):
         self.assertIn("var requestSeq = ++runRequestSeq", _MAIN_PAGE_HTML)
         self.assertIn("if (requestSeq !== runRequestSeq ||", _MAIN_PAGE_HTML)
         self.assertIn("return;", _MAIN_PAGE_HTML)
+
+    def test_contains_runner_trust_buttons(self):
+        self.assertIn("Run All Fixed Cases", _MAIN_PAGE_HTML)
+        self.assertIn("Run Generated Checks", _MAIN_PAGE_HTML)
+        self.assertIn("run-all-btn", _MAIN_PAGE_HTML)
+        self.assertIn("run-generated-btn", _MAIN_PAGE_HTML)
+
+    def test_contains_case_preview_area(self):
+        self.assertIn("case-preview", _MAIN_PAGE_HTML)
+        self.assertIn("case-preview-name", _MAIN_PAGE_HTML)
+        self.assertIn("case-preview-input", _MAIN_PAGE_HTML)
+        self.assertIn("case-preview-expected", _MAIN_PAGE_HTML)
+        self.assertIn("case-preview-notes", _MAIN_PAGE_HTML)
+
+    def test_selection_change_refreshes_case_preview(self):
+        self.assertIn("updateCasePreview()", _MAIN_PAGE_HTML)
+        self.assertIn("detail.cases = detail.cases || []", _MAIN_PAGE_HTML)
+        self.assertIn("document.getElementById('case-select').onchange = function() {\n  clearResult('selection')\n  updateCasePreview()", _MAIN_PAGE_HTML)
+
+    def test_contains_validation_summary_area(self):
+        self.assertIn("validation-summary", _MAIN_PAGE_HTML)
+        self.assertIn("function renderValidationSummary", _MAIN_PAGE_HTML)
 
 
 class TestTimeoutConfig(unittest.TestCase):

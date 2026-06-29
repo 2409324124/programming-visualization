@@ -16,9 +16,10 @@ import sys
 import tempfile
 import time
 import traceback
+from contextlib import contextmanager
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator
 
 EXECUTION_TIMEOUT = 10
 MAX_BODY_BYTES = 512 * 1024
@@ -99,6 +100,8 @@ def _problem_detail(project_root: Path, problem_id: str) -> dict | None:
                     cases.append({
                         "index": ci,
                         "name": c.get("name", f"case {ci}"),
+                        "args": c.get("args"),
+                        "expected": c.get("expected"),
                         "notes": c.get("notes", ""),
                     })
         except (json.JSONDecodeError, OSError):
@@ -116,6 +119,101 @@ def _problem_detail(project_root: Path, problem_id: str) -> dict | None:
         "cases": cases,
         "default_code": default_code,
     }
+
+
+def _validate_problem_id(problem_id: str) -> str | None:
+    if not problem_id:
+        return "题目未找到 (not found): "
+    if ".." in problem_id or "/" in problem_id or "\\" in problem_id:
+        return "非法的题目 ID。"
+    return None
+
+
+@contextmanager
+def _temporary_solution(code: str) -> Iterator[str]:
+    """Write submitted code to a temporary solution file and clean it up."""
+    if not code.strip():
+        raise ValueError("代码不能为空。")
+
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        suffix=".py",
+        delete=False,
+        encoding="utf-8",
+    ) as tmp:
+        tmp.write(code)
+        temp_path = tmp.name
+
+    try:
+        from pv.submission_policy import check_imports
+
+        policy = check_imports(temp_path)
+        if not policy["ok"]:
+            raise ValueError("; ".join(policy["violations"]))
+        yield temp_path
+    finally:
+        try:
+            os.unlink(temp_path)
+        except OSError:
+            pass
+
+
+def _flatten_failure(source: str, index: int, case: dict, result: dict) -> dict[str, Any]:
+    return {
+        "source": source,
+        "index": index,
+        "case_name": case.get("name"),
+        "input": case.get("args"),
+        "expected": result.get("expected", case.get("expected")),
+        "actual": result.get("actual"),
+        "message": result.get("message"),
+        "error": result.get("error"),
+    }
+
+
+def _run_cases_summary(
+    problem_meta: dict,
+    cases: list[dict],
+    solution_path: str,
+    source: str,
+    case_index_offset: int = 0,
+) -> dict[str, Any]:
+    summary: dict[str, Any] = {
+        "passed": True,
+        "passed_count": 0,
+        "total_count": len(cases),
+        "first_failure": None,
+    }
+    for i, case in enumerate(cases):
+        result = _run_case_no_trace(
+            problem_meta,
+            case,
+            solution_path,
+            case_index=case_index_offset + i,
+        )
+        if not result["passed"]:
+            summary["passed"] = False
+            summary["first_failure"] = _flatten_failure(source, i, case, result)
+            return summary
+        summary["passed_count"] += 1
+    return summary
+
+
+def _run_case_no_trace(
+    problem_meta: dict,
+    case: dict,
+    solution_path: str,
+    case_index: int,
+) -> dict:
+    from pv.harness import run_case
+
+    return run_case(
+        problem_meta,
+        case,
+        solution_path,
+        save_trace=False,
+        case_index=case_index,
+    )
 
 
 # ── code execution with timeout ────────────────────────────────────────
@@ -258,6 +356,146 @@ def render_code_request(payload: dict, project_root: Path | str | None = None) -
     return _render_code_request(project_root, payload)
 
 
+def _run_all_fixed_cases_request(project_root: Path, payload: dict) -> dict:
+    problem_id = str(payload.get("problem_id", ""))
+    problem_id_error = _validate_problem_id(problem_id)
+    if problem_id_error:
+        return {"ok": False, "error": problem_id_error}
+
+    problem_dir = project_root / "problems" / problem_id
+    if not problem_dir.is_dir():
+        return {"ok": False, "error": f"题目未找到 (not found): {problem_id}"}
+
+    code = payload.get("code", "")
+    try:
+        from pv.harness import load_cases, load_problem_meta
+
+        problem_meta = load_problem_meta(str(problem_dir))
+        cases = load_cases(str(problem_dir))
+        with _temporary_solution(code) as solution_path:
+            summary = _run_cases_summary(
+                problem_meta,
+                cases,
+                solution_path,
+                source="fixed",
+            )
+    except ValueError as exc:
+        return {"ok": False, "error": str(exc)}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}
+
+    summary["problem_id"] = problem_meta.get("problem_id", problem_id)
+    return {"ok": True, "summary": summary}
+
+
+def run_all_fixed_cases_request(
+    payload: dict,
+    project_root: Path | str | None = None,
+) -> dict:
+    """Public API: run the submitted code against every fixed case."""
+    if project_root is None:
+        project_root = _project_root()
+    else:
+        project_root = Path(project_root)
+    return _run_all_fixed_cases_request(project_root, payload)
+
+
+def _run_generated_checks_request(project_root: Path, payload: dict) -> dict:
+    problem_id = str(payload.get("problem_id", ""))
+    problem_id_error = _validate_problem_id(problem_id)
+    if problem_id_error:
+        return {"ok": False, "error": problem_id_error}
+
+    problem_dir = project_root / "problems" / problem_id
+    if not problem_dir.is_dir():
+        return {"ok": False, "error": f"题目未找到 (not found): {problem_id}"}
+
+    try:
+        generated_count = int(payload.get("generated", 200))
+        seed = int(payload.get("seed", 0))
+    except (TypeError, ValueError):
+        return {"ok": False, "error": "generated 和 seed 必须是整数。"}
+
+    code = payload.get("code", "")
+    try:
+        from pv.harness import load_cases, load_problem_meta
+        from pv.problem_validation import ProblemValidationError, VALIDATION_SPECS
+
+        problem_meta = load_problem_meta(str(problem_dir))
+        registered_problem_id = problem_meta.get("problem_id", problem_id)
+        spec = VALIDATION_SPECS.get(registered_problem_id)
+        if spec is None:
+            supported = ", ".join(sorted(VALIDATION_SPECS))
+            return {
+                "ok": False,
+                "error": (
+                    f"Generated validation is not available for "
+                    f"{registered_problem_id!r}. Supported problems: {supported}."
+                ),
+            }
+
+        fixed_cases = load_cases(str(problem_dir))
+        generated_cases = spec.generate_cases(generated_count, seed)
+        with _temporary_solution(code) as solution_path:
+            fixed = _run_cases_summary(
+                problem_meta,
+                fixed_cases,
+                solution_path,
+                source="fixed",
+            )
+            first_failure = fixed["first_failure"]
+            generated = {
+                "passed": False if first_failure else True,
+                "passed_count": 0,
+                "total_count": len(generated_cases),
+                "first_failure": None,
+            }
+            if first_failure is None:
+                generated = _run_cases_summary(
+                    problem_meta,
+                    generated_cases,
+                    solution_path,
+                    source="generated",
+                    case_index_offset=len(fixed_cases),
+                )
+                first_failure = generated["first_failure"]
+    except ProblemValidationError as exc:
+        return {"ok": False, "error": exc.user_message}
+    except ValueError as exc:
+        return {"ok": False, "error": str(exc)}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}
+
+    fixed_total = fixed["total_count"]
+    generated_total = generated["total_count"]
+    fixed_passed = fixed["passed_count"]
+    generated_passed = generated["passed_count"]
+    summary = {
+        "problem_id": problem_meta.get("problem_id", problem_id),
+        "passed": first_failure is None,
+        "fixed": {"passed": fixed_passed, "total": fixed_total},
+        "generated": {"passed": generated_passed, "total": generated_total},
+        "total": {
+            "passed": fixed_passed + generated_passed,
+            "total": fixed_total + generated_total,
+        },
+        "first_failure": first_failure,
+    }
+    return {"ok": True, "summary": summary}
+
+
+def run_generated_checks_request(
+    payload: dict,
+    project_root: Path | str | None = None,
+) -> dict:
+    """Public API: run fixed cases and oracle-generated checks."""
+    if project_root is None:
+        project_root = _project_root()
+    else:
+        project_root = Path(project_root)
+    return _run_generated_checks_request(project_root, payload)
+
+
 def scan_problems(project_root: Path | str | None = None) -> list[dict]:
     """Public API: list available problems."""
     if project_root is None:
@@ -296,8 +534,8 @@ select,button{padding:.4rem .7rem;border:1px solid #555;border-radius:4px;backgr
 select:hover,button:hover{background:#444}
 button.primary{background:#0d47a1;border-color:#1565c0;color:#fff;font-weight:700}
 button.primary:hover{background:#1565c0}
-button.primary:disabled{opacity:.4;cursor:default}
-#code-input{flex:1;min-height:200px;background:#1e1e1e;color:#d4d4d4;border:1px solid #555;border-radius:4px;padding:.6rem;font-family:'Cascadia Code','Fira Code',monospace;font-size:.82rem;resize:vertical;tab-size:4}
+button:disabled{opacity:.4;cursor:default}
+#code-input{flex:1;min-height:180px;background:#1e1e1e;color:#d4d4d4;border:1px solid #555;border-radius:4px;padding:.6rem;font-family:'Cascadia Code','Fira Code',monospace;font-size:.82rem;resize:vertical;tab-size:4}
 #status-bar{display:flex;align-items:center;gap:.6rem;min-height:28px}
 #status-bar .tag{font-weight:700;font-size:.75rem;padding:2px 10px;border-radius:4px}
 .tag.passed{background:#1b5e20;color:#a5d6a7}
@@ -312,6 +550,15 @@ button.primary:disabled{opacity:.4;cursor:default}
 #viewer-frame{flex:1;border:none;width:100%}
 #empty-state{flex:1;display:flex;align-items:center;justify-content:center;color:#666;font-size:.9rem}
 #empty-state p{text-align:center;line-height:1.6}
+.action-row{display:flex;gap:.45rem;flex-wrap:wrap}
+.action-row button{flex:1;min-width:120px}
+.panel{border:1px solid #3a3a3a;border-radius:4px;background:#202020;padding:.55rem}
+.panel h3{font-size:.75rem;color:#aaa;margin:0 0 .4rem 0;text-transform:uppercase}
+.field{margin:.35rem 0}
+.field .k{font-size:.7rem;color:#888;margin-bottom:.15rem}
+.field .v{font-family:'Cascadia Code','Fira Code',monospace;font-size:.74rem;white-space:pre-wrap;word-break:break-word;color:#d4d4d4;margin:0}
+#case-preview{max-height:210px;overflow:auto}
+#validation-summary{max-height:220px;overflow:auto}
 </style>
 </head>
 <body>
@@ -322,13 +569,25 @@ button.primary:disabled{opacity:.4;cursor:default}
   <select id="problem-select"></select>
   <label>Case</label>
   <select id="case-select"></select>
-  <label>Code</label>
-  <textarea id="code-input" spellcheck="false"></textarea>
+  <div id="case-preview" class="panel">
+    <h3>Current Case</h3>
+    <div class="field"><div class="k">Name</div><pre class="v" id="case-preview-name"></pre></div>
+    <div class="field"><div class="k">Input</div><pre class="v" id="case-preview-input"></pre></div>
+    <div class="field"><div class="k">Expected</div><pre class="v" id="case-preview-expected"></pre></div>
+    <div class="field"><div class="k">Notes</div><pre class="v" id="case-preview-notes"></pre></div>
+  </div>
   <div id="status-bar">
-    <button class="primary" id="run-btn" onclick="runCode()">▶ Run</button>
     <span id="status-tag"></span>
   </div>
+  <div class="action-row">
+    <button class="primary" id="run-btn" onclick="runCode()">▶ Run</button>
+    <button id="run-all-btn" onclick="runAllFixedCases()">Run All Fixed Cases</button>
+    <button id="run-generated-btn" onclick="runGeneratedChecks()">Run Generated Checks</button>
+  </div>
   <div id="error-msg"></div>
+  <div id="validation-summary" class="panel"></div>
+  <label>Code</label>
+  <textarea id="code-input" spellcheck="false"></textarea>
 </div>
 <div class="right">
   <div class="right-header">
@@ -341,7 +600,39 @@ button.primary:disabled{opacity:.4;cursor:default}
 </div>
 <script>
 var problems = [];
+var currentProblemDetail = null;
 var runRequestSeq = 0;
+
+function formatValue(value) {
+  if (value === undefined || value === null || value === '') { return ''; }
+  try { return JSON.stringify(value, null, 2); }
+  catch(e) { return String(value); }
+}
+
+function setText(id, text) {
+  document.getElementById(id).textContent = text || '';
+}
+
+function selectedCase() {
+  if (!currentProblemDetail || !currentProblemDetail.cases) { return null; }
+  var caseIndex = parseInt(document.getElementById('case-select').value, 10);
+  if (isNaN(caseIndex)) { caseIndex = 0; }
+  return currentProblemDetail.cases[caseIndex] || null;
+}
+
+function updateCasePreview() {
+  var c = selectedCase();
+  setText('case-preview-name', c ? c.name : '');
+  setText('case-preview-input', c ? formatValue(c.args) : '');
+  setText('case-preview-expected', c ? formatValue(c.expected) : '');
+  setText('case-preview-notes', c ? c.notes : '');
+}
+
+function setButtonsDisabled(disabled) {
+  document.getElementById('run-btn').disabled = disabled;
+  document.getElementById('run-all-btn').disabled = disabled;
+  document.getElementById('run-generated-btn').disabled = disabled;
+}
 
 function clearResult(reason) {
   var tag = document.getElementById('status-tag');
@@ -355,13 +646,14 @@ function clearResult(reason) {
   tag.textContent = '';
   err.textContent = '';
   ae.textContent = '';
+  document.getElementById('validation-summary').innerHTML = '';
   frame.style.display = 'none';
   frame.srcdoc = '';
   empty.style.display = 'flex';
   empty.innerHTML = '<p>Selection changed. Click Run to execute this case.</p>';
   if (reason === 'selection') {
     runRequestSeq += 1;
-    btn.disabled = false;
+    setButtonsDisabled(false);
   }
 }
 
@@ -392,6 +684,8 @@ async function onProblemChange() {
     var detail = await resp.json();
     if (document.getElementById('problem-select').value !== pid) { return; }
     if (detail.error) { console.error(detail.error); return; }
+    detail.cases = detail.cases || [];
+    currentProblemDetail = detail;
     var cs = document.getElementById('case-select');
     cs.innerHTML = '';
     detail.cases.forEach(function(c) {
@@ -404,13 +698,45 @@ async function onProblemChange() {
     if (detail.default_code) {
       document.getElementById('code-input').value = detail.default_code;
     }
+    updateCasePreview();
   } catch(e) { console.error(e); }
 }
 
 document.getElementById('problem-select').onchange = onProblemChange;
 document.getElementById('case-select').onchange = function() {
-  clearResult('selection');
+  clearResult('selection')
+  updateCasePreview()
 };
+
+function renderCurrentCaseSummary(rt) {
+  var status = rt.error ? 'ERROR' : (rt.passed ? 'PASSED' : 'FAILED');
+  document.getElementById('validation-summary').innerHTML =
+    '<h3>Current Case Result</h3>' +
+    '<div class="field"><div class="k">Status</div><pre class="v">' + status + '</pre></div>' +
+    '<div class="field"><div class="k">Problem</div><pre class="v">' + (rt.problem_id || '') + '</pre></div>' +
+    '<div class="field"><div class="k">Case</div><pre class="v">' + rt.case_index + ' / ' + (rt.case_name || '') + '</pre></div>' +
+    '<div class="field"><div class="k">Input</div><pre class="v">' + formatValue(rt.input) + '</pre></div>' +
+    '<div class="field"><div class="k">Actual</div><pre class="v">' + formatValue(rt.actual) + '</pre></div>' +
+    '<div class="field"><div class="k">Expected</div><pre class="v">' + formatValue(rt.expected) + '</pre></div>';
+}
+
+function renderValidationSummary(summary, title) {
+  var html = '<h3>' + title + '</h3>';
+  if (summary.fixed && summary.generated) {
+    html += '<div class="field"><div class="k">Problem</div><pre class="v">' + summary.problem_id + '</pre></div>';
+    html += '<div class="field"><div class="k">Fixed</div><pre class="v">' + summary.fixed.passed + '/' + summary.fixed.total + ' passed</pre></div>';
+    html += '<div class="field"><div class="k">Generated</div><pre class="v">' + summary.generated.passed + '/' + summary.generated.total + ' passed</pre></div>';
+    html += '<div class="field"><div class="k">Total</div><pre class="v">' + summary.total.passed + '/' + summary.total.total + ' passed</pre></div>';
+  } else {
+    html += '<div class="field"><div class="k">Problem</div><pre class="v">' + summary.problem_id + '</pre></div>';
+    html += '<div class="field"><div class="k">Fixed</div><pre class="v">' + summary.passed_count + '/' + summary.total_count + ' passed</pre></div>';
+  }
+  html += '<div class="field"><div class="k">Status</div><pre class="v">' + (summary.passed ? 'PASSED' : 'FAILED') + '</pre></div>';
+  if (summary.first_failure) {
+    html += '<div class="field"><div class="k">First Failure</div><pre class="v">' + formatValue(summary.first_failure) + '</pre></div>';
+  }
+  document.getElementById('validation-summary').innerHTML = html;
+}
 
 async function runCode() {
   var btn = document.getElementById('run-btn');
@@ -427,8 +753,9 @@ async function runCode() {
   err.textContent = '';
   tag.className = 'tag running';
   tag.textContent = 'Running...';
-  btn.disabled = true;
+  setButtonsDisabled(true);
   ae.textContent = '';
+  document.getElementById('validation-summary').innerHTML = '';
 
   try {
     var resp = await fetch('/api/render-code', {
@@ -452,7 +779,7 @@ async function runCode() {
       tag.className = 'tag error';
       tag.textContent = 'ERROR';
       err.textContent = data.error || 'Unknown error';
-      btn.disabled = false;
+      setButtonsDisabled(false);
       return;
     }
     var rt = data.runtime;
@@ -469,6 +796,7 @@ async function runCode() {
         tag.textContent = 'FAILED';
       }
       ae.textContent = 'actual=' + JSON.stringify(rt.actual) + '  expected=' + JSON.stringify(rt.expected);
+      renderCurrentCaseSummary(rt);
     }
     if (data.html) {
       frame.style.display = 'block';
@@ -487,7 +815,73 @@ async function runCode() {
     tag.textContent = 'ERROR';
     err.textContent = 'Network or server error: ' + e.message;
   }
-  btn.disabled = false;
+  setButtonsDisabled(false);
+}
+
+async function runValidationRequest(endpoint, title) {
+  var tag = document.getElementById('status-tag');
+  var err = document.getElementById('error-msg');
+  var frame = document.getElementById('viewer-frame');
+  var empty = document.getElementById('empty-state');
+  var ae = document.getElementById('actual-expected');
+  var runProblemId = document.getElementById('problem-select').value;
+  var requestSeq = ++runRequestSeq;
+
+  tag.className = 'tag running';
+  tag.textContent = 'Running...';
+  err.textContent = '';
+  ae.textContent = '';
+  frame.style.display = 'none';
+  frame.srcdoc = '';
+  empty.style.display = 'flex';
+  empty.innerHTML = '<p>Validation summary is shown in the left panel.</p>';
+  document.getElementById('validation-summary').innerHTML = '';
+  setButtonsDisabled(true);
+
+  try {
+    var resp = await fetch(endpoint, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        problem_id: runProblemId,
+        code: document.getElementById('code-input').value,
+        generated: 200,
+        seed: 0
+      })
+    });
+    var data = await resp.json();
+    if (requestSeq !== runRequestSeq ||
+        document.getElementById('problem-select').value !== runProblemId) {
+      return;
+    }
+    if (!data.ok) {
+      tag.className = 'tag error';
+      tag.textContent = 'ERROR';
+      err.textContent = data.error || 'Unknown error';
+      setButtonsDisabled(false);
+      return;
+    }
+    renderValidationSummary(data.summary, title);
+    tag.className = data.summary.passed ? 'tag passed' : 'tag failed';
+    tag.textContent = data.summary.passed ? 'PASSED' : 'FAILED';
+  } catch(e) {
+    if (requestSeq !== runRequestSeq ||
+        document.getElementById('problem-select').value !== runProblemId) {
+      return;
+    }
+    tag.className = 'tag error';
+    tag.textContent = 'ERROR';
+    err.textContent = 'Network or server error: ' + e.message;
+  }
+  setButtonsDisabled(false);
+}
+
+function runAllFixedCases() {
+  runValidationRequest('/api/run-all-fixed', 'All Fixed Cases');
+}
+
+function runGeneratedChecks() {
+  runValidationRequest('/api/run-generated-checks', 'Generated Checks');
 }
 
 loadProblems();
@@ -552,7 +946,11 @@ class _ServerHandler(BaseHTTPRequestHandler):
             self._json_response({"error": "Not found"}, 404)
 
     def do_POST(self) -> None:
-        if self.path == "/api/render-code":
+        if self.path in (
+            "/api/render-code",
+            "/api/run-all-fixed",
+            "/api/run-generated-checks",
+        ):
             try:
                 payload = self._read_body()
             except RequestBodyTooLarge as exc:
@@ -561,7 +959,12 @@ class _ServerHandler(BaseHTTPRequestHandler):
             except ValueError as exc:
                 self._json_response({"ok": False, "error": str(exc)}, 400)
                 return
-            result = _render_code_request(self.server_project_root, payload)
+            if self.path == "/api/render-code":
+                result = _render_code_request(self.server_project_root, payload)
+            elif self.path == "/api/run-all-fixed":
+                result = _run_all_fixed_cases_request(self.server_project_root, payload)
+            else:
+                result = _run_generated_checks_request(self.server_project_root, payload)
             self._json_response(result)
         else:
             self._json_response({"error": "Not found"}, 404)
