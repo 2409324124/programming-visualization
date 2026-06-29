@@ -269,6 +269,29 @@ class TestMainPageHTML(unittest.TestCase):
         self.assertNotIn("实时", _MAIN_PAGE_HTML)
         self.assertNotIn("streaming", _MAIN_PAGE_HTML.lower())
 
+    def test_page_has_clear_result_helper(self):
+        self.assertIn("function clearResult(reason)", _MAIN_PAGE_HTML)
+        self.assertIn("frame.srcdoc = ''", _MAIN_PAGE_HTML)
+        self.assertIn("Selection changed. Click Run to execute this case.", _MAIN_PAGE_HTML)
+
+    def test_problem_change_clears_stale_result(self):
+        self.assertIn("async function onProblemChange() {\n  clearResult('selection')", _MAIN_PAGE_HTML)
+
+    def test_case_change_clears_stale_result(self):
+        self.assertIn("document.getElementById('case-select').onchange = function() {\n  clearResult('selection')", _MAIN_PAGE_HTML)
+
+    def test_run_code_reads_problem_and_case_from_dom(self):
+        self.assertIn("var runProblemId = document.getElementById('problem-select').value", _MAIN_PAGE_HTML)
+        self.assertIn("var runCaseIndex = parseInt(document.getElementById('case-select').value, 10)", _MAIN_PAGE_HTML)
+        self.assertIn("problem_id: runProblemId", _MAIN_PAGE_HTML)
+        self.assertIn("case_index: runCaseIndex", _MAIN_PAGE_HTML)
+
+    def test_run_code_has_stale_response_guard(self):
+        self.assertIn("var runRequestSeq = 0", _MAIN_PAGE_HTML)
+        self.assertIn("var requestSeq = ++runRequestSeq", _MAIN_PAGE_HTML)
+        self.assertIn("if (requestSeq !== runRequestSeq ||", _MAIN_PAGE_HTML)
+        self.assertIn("return;", _MAIN_PAGE_HTML)
+
 
 class TestTimeoutConfig(unittest.TestCase):
     """Verify timeout and request size constants exist."""

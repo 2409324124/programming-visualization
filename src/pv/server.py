@@ -340,9 +340,30 @@ button.primary:disabled{opacity:.4;cursor:default}
 </div>
 </div>
 <script>
-var currentProblemId = '';
-var currentCaseIndex = 0;
 var problems = [];
+var runRequestSeq = 0;
+
+function clearResult(reason) {
+  var tag = document.getElementById('status-tag');
+  var err = document.getElementById('error-msg');
+  var frame = document.getElementById('viewer-frame');
+  var empty = document.getElementById('empty-state');
+  var ae = document.getElementById('actual-expected');
+  var btn = document.getElementById('run-btn');
+
+  tag.className = '';
+  tag.textContent = '';
+  err.textContent = '';
+  ae.textContent = '';
+  frame.style.display = 'none';
+  frame.srcdoc = '';
+  empty.style.display = 'flex';
+  empty.innerHTML = '<p>Selection changed. Click Run to execute this case.</p>';
+  if (reason === 'selection') {
+    runRequestSeq += 1;
+    btn.disabled = false;
+  }
+}
 
 async function loadProblems() {
   try {
@@ -364,11 +385,12 @@ async function loadProblems() {
 }
 
 async function onProblemChange() {
+  clearResult('selection');
   var pid = document.getElementById('problem-select').value;
-  currentProblemId = pid;
   try {
     var resp = await fetch('/api/problem/' + pid);
     var detail = await resp.json();
+    if (document.getElementById('problem-select').value !== pid) { return; }
     if (detail.error) { console.error(detail.error); return; }
     var cs = document.getElementById('case-select');
     cs.innerHTML = '';
@@ -379,7 +401,6 @@ async function onProblemChange() {
       cs.appendChild(opt);
     });
     cs.value = '0';
-    currentCaseIndex = 0;
     if (detail.default_code) {
       document.getElementById('code-input').value = detail.default_code;
     }
@@ -388,7 +409,7 @@ async function onProblemChange() {
 
 document.getElementById('problem-select').onchange = onProblemChange;
 document.getElementById('case-select').onchange = function() {
-  currentCaseIndex = parseInt(this.value);
+  clearResult('selection');
 };
 
 async function runCode() {
@@ -398,6 +419,11 @@ async function runCode() {
   var frame = document.getElementById('viewer-frame');
   var empty = document.getElementById('empty-state');
   var ae = document.getElementById('actual-expected');
+  var runProblemId = document.getElementById('problem-select').value;
+  var runCaseIndex = parseInt(document.getElementById('case-select').value, 10);
+  if (isNaN(runCaseIndex)) { runCaseIndex = 0; }
+  var requestSeq = ++runRequestSeq;
+
   err.textContent = '';
   tag.className = 'tag running';
   tag.textContent = 'Running...';
@@ -409,12 +435,19 @@ async function runCode() {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({
-        problem_id: currentProblemId,
-        case_index: currentCaseIndex,
+        problem_id: runProblemId,
+        case_index: runCaseIndex,
         code: document.getElementById('code-input').value
       })
     });
     var data = await resp.json();
+    var selectedCaseIndex = parseInt(document.getElementById('case-select').value, 10);
+    if (isNaN(selectedCaseIndex)) { selectedCaseIndex = 0; }
+    if (requestSeq !== runRequestSeq ||
+        document.getElementById('problem-select').value !== runProblemId ||
+        selectedCaseIndex !== runCaseIndex) {
+      return;
+    }
     if (!data.ok) {
       tag.className = 'tag error';
       tag.textContent = 'ERROR';
@@ -443,6 +476,13 @@ async function runCode() {
       frame.srcdoc = data.html;
     }
   } catch(e) {
+    var selectedCaseIndex = parseInt(document.getElementById('case-select').value, 10);
+    if (isNaN(selectedCaseIndex)) { selectedCaseIndex = 0; }
+    if (requestSeq !== runRequestSeq ||
+        document.getElementById('problem-select').value !== runProblemId ||
+        selectedCaseIndex !== runCaseIndex) {
+      return;
+    }
     tag.className = 'tag error';
     tag.textContent = 'ERROR';
     err.textContent = 'Network or server error: ' + e.message;
