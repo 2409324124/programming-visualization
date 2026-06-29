@@ -5,112 +5,337 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Programming Visualization — Demo Gallery</title>
 <style>
-  body { font-family: system-ui, -apple-system, sans-serif; max-width: 800px; margin: 2rem auto; padding: 0 1rem; color: #1a1a1a; background: #fafafa; }
-  h1 { margin-bottom: .2rem; }
-  .subtitle { color: #666; margin-bottom: 2rem; }
-  .demo { background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 1rem 1.2rem; margin-bottom: 1rem; display: flex; align-items: center; gap: 1rem; }
-  .demo:hover { border-color: #90caf9; box-shadow: 0 2px 8px rgba(0,0,0,.06); }
-  .demo-tag { font-size: .75rem; padding: 2px 8px; border-radius: 4px; font-weight: 600; white-space: nowrap; }
-  .tag-array { background: #e3f2fd; color: #1565c0; }
-  .tag-twoptr { background: #f3e5f5; color: #7b1fa2; }
-  .tag-linkedlist { background: #e8f5e9; color: #2e7d32; }
-  .tag-dp { background: #fff3e0; color: #e65100; }
-  .demo-info { flex: 1; }
-  .demo-info h3 { margin: 0 0 .2rem; }
-  .demo-info p { margin: 0; color: #666; font-size: .9rem; }
-  .demo-link { color: #1565c0; text-decoration: none; font-weight: 600; white-space: nowrap; }
+  :root {
+    color-scheme: light;
+    --bg: #f7f7f4;
+    --surface: #fff;
+    --surface-muted: #f0f1ed;
+    --text: #1f2328;
+    --muted: #687078;
+    --line: #d9ddd6;
+    --strong-line: #b8c5b2;
+    --accent: #2f6f4e;
+    --accent-soft: #e3f0e8;
+    --tool: #245f8f;
+    --tool-soft: #e4eef8;
+    --experimental: #77612f;
+    --experimental-soft: #f2ead6;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    line-height: 1.5;
+  }
+
+  .page {
+    width: min(1040px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 40px 0 28px;
+  }
+
+  header {
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  h1 {
+    margin: 0;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    line-height: 1.05;
+    letter-spacing: 0;
+  }
+
+  .subtitle {
+    max-width: 680px;
+    margin: 14px 0 0;
+    color: var(--muted);
+    font-size: 1rem;
+  }
+
+  .section {
+    padding: 30px 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .section:last-of-type { border-bottom: 0; }
+
+  .section-heading {
+    display: grid;
+    grid-template-columns: minmax(180px, 260px) 1fr;
+    gap: 24px;
+    align-items: start;
+    margin-bottom: 16px;
+  }
+
+  h2 {
+    margin: 0;
+    font-size: 1.1rem;
+    line-height: 1.25;
+    letter-spacing: 0;
+  }
+
+  .section-copy {
+    margin: 0;
+    color: var(--muted);
+    max-width: 720px;
+  }
+
+  .demo-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .demo {
+    display: grid;
+    grid-template-columns: minmax(120px, 170px) 1fr auto;
+    gap: 16px;
+    align-items: center;
+    min-height: 76px;
+    padding: 15px 18px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface);
+  }
+
+  .demo.primary {
+    border-color: var(--strong-line);
+    box-shadow: 0 1px 0 rgba(31, 35, 40, .04);
+  }
+
+  .demo.secondary,
+  .demo.experimental {
+    background: rgba(255, 255, 255, .62);
+  }
+
+  .demo:hover { border-color: #9eb4a5; }
+
+  .tag {
+    width: fit-content;
+    max-width: 100%;
+    padding: 3px 8px;
+    border-radius: 5px;
+    font-size: .74rem;
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--accent-soft);
+    white-space: nowrap;
+  }
+
+  .tag.tool {
+    color: var(--tool);
+    background: var(--tool-soft);
+  }
+
+  .tag.experimental {
+    color: var(--experimental);
+    background: var(--experimental-soft);
+  }
+
+  .demo h3 {
+    margin: 0 0 3px;
+    font-size: 1rem;
+    line-height: 1.3;
+    letter-spacing: 0;
+  }
+
+  .demo p {
+    margin: 0;
+    color: var(--muted);
+    font-size: .92rem;
+  }
+
+  .demo-link {
+    color: var(--accent);
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
   .demo-link:hover { text-decoration: underline; }
-  footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid #e0e0e0; color: #999; font-size: .85rem; }
-  footer a { color: #666; }
+
+  .local-note {
+    margin-top: 12px;
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--surface-muted);
+  }
+
+  .local-note p {
+    margin: 0 0 8px;
+    color: var(--muted);
+  }
+
+  code,
+  pre {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+
+  pre {
+    margin: 0;
+    padding: 11px 12px;
+    overflow-x: auto;
+    border-radius: 6px;
+    background: #202421;
+    color: #e7ece6;
+    font-size: .86rem;
+    line-height: 1.45;
+  }
+
+  footer {
+    padding: 22px 0 6px;
+    color: var(--muted);
+    font-size: .88rem;
+  }
+
+  footer a {
+    color: var(--text);
+    font-weight: 700;
+  }
+
+  @media (max-width: 720px) {
+    .page {
+      width: min(100% - 24px, 1040px);
+      padding-top: 26px;
+    }
+
+    .section-heading,
+    .demo {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .demo {
+      align-items: start;
+      padding: 14px;
+    }
+
+    .demo-link {
+      width: fit-content;
+    }
+  }
 </style>
 </head>
 <body>
+<main class="page">
+  <header>
+    <h1>Programming Visualization Demo Gallery</h1>
+    <p class="subtitle">面向自学开发者的算法执行过程可视化入口。先看稳定题目 demo；代码执行工具和实验性页面放在后面。</p>
+  </header>
 
-<h1>Programming Visualization</h1>
-<p class="subtitle">算法执行过程可视化 Demo — 面向非科班 / 自学开发者的 LeetCode-style 学习器。</p>
+  <section class="section" aria-labelledby="stable-heading">
+    <div class="section-heading">
+      <h2 id="stable-heading">Recommended / Stable Algorithm Visualizations</h2>
+      <p class="section-copy">主入口。这里的页面展示稳定的题目可视化：输入状态、关键步骤、解释句和最终结果。</p>
+    </div>
 
-<div class="demo">
-  <span class="demo-tag tag-array">array + hash map</span>
-  <div class="demo-info">
-    <h3>Two Sum · 两数之和</h3>
-    <p>哈希表补数查找：数组读取、哈希表更新、答案定位。</p>
-  </div>
-  <a class="demo-link" href="0001_two_sum.case0.html">查看 →</a>
-</div>
+    <div class="demo-list">
+      <article class="demo primary">
+        <span class="tag">array + hash map</span>
+        <div>
+          <h3>Two Sum · 两数之和</h3>
+          <p>哈希表补数查找：数组读取、哈希表更新、答案定位。</p>
+        </div>
+        <a class="demo-link" href="0001_two_sum.case0.html">查看</a>
+      </article>
 
-<div class="demo">
-  <span class="demo-tag tag-twoptr">two pointers</span>
-  <div class="demo-info">
-    <h3>Container With Most Water · 盛最多水的容器</h3>
-    <p>双指针向内扫描：面积计算、短板比较、最大值更新。</p>
-  </div>
-  <a class="demo-link" href="0011_container_with_most_water.case0.html">查看 →</a>
-</div>
+      <article class="demo primary">
+        <span class="tag">two pointers</span>
+        <div>
+          <h3>Container With Most Water · 盛最多水的容器</h3>
+          <p>双指针向内扫描：面积计算、短板比较、最大值更新。</p>
+        </div>
+        <a class="demo-link" href="0011_container_with_most_water.case0.html">查看</a>
+      </article>
 
-<div class="demo">
-  <span class="demo-tag tag-linkedlist">linked list</span>
-  <div class="demo-info">
-    <h3>Reverse Linked List · 反转链表</h3>
-    <p>链表箭头逐个反转：保存 next、断开连接、指向 prev、指针前移。</p>
-  </div>
-  <a class="demo-link" href="0206_reverse_linked_list.case0.html">查看 →</a>
-</div>
+      <article class="demo primary">
+        <span class="tag">linked list</span>
+        <div>
+          <h3>Reverse Linked List · 反转链表</h3>
+          <p>链表箭头逐个反转：保存 next、重连指针、移动游标。</p>
+        </div>
+        <a class="demo-link" href="0206_reverse_linked_list.case0.html">查看</a>
+      </article>
 
-<div class="demo">
-  <span class="demo-tag tag-dp">DP table</span>
-  <div class="demo-info">
-    <h3>Climbing Stairs · 爬楼梯</h3>
-    <p>DP 表格填充：读取前两格、递推计算、写入当前格。</p>
-  </div>
-  <a class="demo-link" href="0070_climbing_stairs.case0.html">查看 →</a>
-</div>
+      <article class="demo primary">
+        <span class="tag">DP table</span>
+        <div>
+          <h3>Climbing Stairs · 爬楼梯</h3>
+          <p>DP 表格填充：读取前两格、递推计算、写入当前格。</p>
+        </div>
+        <a class="demo-link" href="0070_climbing_stairs.case0.html">查看</a>
+      </article>
 
-<div class="demo">
-  <span class="demo-tag tag-dp">DP choose / skip</span>
-  <div class="demo-info">
-    <h3>House Robber · 打家劫舍</h3>
-    <p>动态规划选择：跳过当前房，或偷当前房并接上安全位置。</p>
-  </div>
-  <a class="demo-link" href="0198_house_robber.case0.html">查看 →</a>
-</div>
+      <article class="demo primary">
+        <span class="tag">DP choose / skip</span>
+        <div>
+          <h3>House Robber · 打家劫舍</h3>
+          <p>动态规划选择：跳过当前房，或偷当前房并接上安全位置。</p>
+        </div>
+        <a class="demo-link" href="0198_house_robber.case0.html">查看</a>
+      </article>
+    </div>
+  </section>
 
-<h2 style="margin-top:2rem;color:#e65100">🎬 Story Animation Demo</h2>
+  <section class="section" aria-labelledby="tools-heading">
+    <div class="section-heading">
+      <h2 id="tools-heading">Learner Tools</h2>
+      <p class="section-copy">用于查看自己代码如何逐行执行。线上页面提供静态示例；交互式运行器需要在本地启动。</p>
+    </div>
 
-<div class="demo" style="border-color:#ff9800">
-  <span class="demo-tag tag-array">storyboard</span>
-  <div class="demo-info">
-    <h3>Two Sum · 两数之和 — 空间化动画</h3>
-    <p>数组元素变成方框，哈希表变成区域，箭头连接匹配项。真正的算法动画。</p>
-  </div>
-  <a class="demo-link" href="story_0001_two_sum.case0.html">查看 →</a>
-</div>
+    <div class="demo-list">
+      <article class="demo secondary">
+        <span class="tag tool">code viewer</span>
+        <div>
+          <h3>Code Execution Viewer</h3>
+          <p>逐行查看代码执行过程：locals、return 行、未执行代码和判题结果。</p>
+        </div>
+        <a class="demo-link" href="code_0001_two_sum.case0.html">查看示例</a>
+      </article>
+    </div>
 
-<h2 style="margin-top:2rem;color:#1565c0">🔬 Runtime-Bound Visualization</h2>
+    <div class="local-note">
+      <p><strong>Local Interactive Runner</strong> 是本地功能，不是线上可直接使用的页面。启动后访问 <code>http://127.0.0.1:8765/</code>。</p>
+      <pre>uv run python -m pv serve --host 127.0.0.1 --port 8765</pre>
+    </div>
+  </section>
 
-<div class="demo" style="border-color:#42a5f5">
-  <span class="demo-tag tag-array">runtime-bound</span>
-  <div class="demo-info">
-    <h3>Two Sum · 两数之和 — Runtime-Bound 概念可视化</h3>
-    <p>真实运行结果绑定到概念卡片：input/target/current/need/seen/answer 全部来自运行时。</p>
-  </div>
-  <a class="demo-link" href="visual_0001_two_sum.case0.html">查看 →</a>
-</div>
+  <section class="section" aria-labelledby="experimental-heading">
+    <div class="section-heading">
+      <h2 id="experimental-heading">Experimental / Legacy</h2>
+      <p class="section-copy">这些页面用于动画实验或架构验证，不是当前推荐主入口。</p>
+    </div>
 
-<h2 style="margin-top:2rem;color:#1565c0">💻 Code Execution Viewer</h2>
+    <div class="demo-list">
+      <article class="demo experimental">
+        <span class="tag experimental">story animation</span>
+        <div>
+          <h3>Story Animation Demo</h3>
+          <p>Two Sum 的空间化动画实验：数组元素、哈希表区域和匹配箭头。</p>
+        </div>
+        <a class="demo-link" href="story_0001_two_sum.case0.html">查看实验</a>
+      </article>
 
-<div class="demo" style="border-color:#42a5f5">
-  <span class="demo-tag tag-array">code viewer</span>
-  <div class="demo-info">
-    <h3>Two Sum · 两数之和 — 代码执行查看器</h3>
-    <p>像调试器一样查看代码的逐行执行过程：locals、stdout、行高亮、passed/failed。</p>
-  </div>
-  <a class="demo-link" href="code_0001_two_sum.case0.html">查看 →</a>
-</div>
+      <article class="demo experimental">
+        <span class="tag experimental">runtime-bound</span>
+        <div>
+          <h3>Runtime-Bound Visualization</h3>
+          <p>把真实运行结果绑定到概念卡片的架构验证页面。</p>
+        </div>
+        <a class="demo-link" href="visual_0001_two_sum.case0.html">查看实验</a>
+      </article>
+    </div>
+  </section>
 
-<footer>
-  <p>开源项目 · <a href="https://github.com/2409324124/programming-visualization">GitHub</a></p>
-  <p>本项目不隶属于 LeetCode，不复制官方题面或隐藏测试。所有内容均为原创教育素材。</p>
-</footer>
-
+  <footer>
+    <p>开源项目：<a href="https://github.com/2409324124/programming-visualization">GitHub</a></p>
+    <p>本项目不隶属于 LeetCode，不复制官方题面、官方题解、隐藏测试或付费内容。所有题面摘要、用例和解释内容均为原创教育素材。</p>
+  </footer>
+</main>
 </body>
 </html>
