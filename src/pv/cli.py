@@ -563,6 +563,57 @@ def cmd_serve(args: argparse.Namespace) -> None:
     run_server(host=host, port=port, project_root=project_root)
 
 
+def cmd_validate_problem(args: argparse.Namespace) -> None:
+    """Execute oracle-based generated validation for a problem."""
+    try:
+        from pv.problem_validation import ProblemValidationError, validate_problem
+    except ImportError as exc:
+        print(f"错误: problem_validation 模块加载失败: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+    try:
+        result = validate_problem(
+            problem_dir=args.problem_path,
+            generated_count=args.generated,
+            seed=args.seed,
+            solution_file=args.solution,
+        )
+    except (ProblemValidationError, ImportPolicyError, PVError) as exc:
+        print(f"错误: {exc.user_message}", file=sys.stderr)
+        if exc.detail:
+            print(f"  详情: {exc.detail}", file=sys.stderr)
+        sys.exit(1)
+
+    problem_id = result["problem_id"]
+    fixed = result["fixed"]
+    generated = result["generated"]
+    total_passed = fixed["passed"] + generated["passed"]
+    total_count = fixed["total"] + generated["total"]
+
+    print(f"Problem: {problem_id}")
+    print(f"fixed: {fixed['passed']}/{fixed['total']} passed")
+    print(f"generated: {generated['passed']}/{generated['total']} passed")
+    print(f"total: {total_passed}/{total_count} passed")
+
+    if not result["passed"]:
+        failure = result["first_failure"]
+        case = failure["case"]
+        run_result = failure["result"]
+        print()
+        print(
+            f"first failure: {failure['source']} case {failure['index']} "
+            f"({case.get('name', 'unnamed')})"
+        )
+        print(f"input: {_format_args(case.get('args', {}))}")
+        print(f"expected: {_format_value(run_result.get('expected'))}")
+        print(f"actual: {_format_value(run_result.get('actual'))}")
+        if run_result.get("message"):
+            print(f"message: {run_result['message']}")
+        if run_result.get("error"):
+            print(f"error: {run_result['error']}")
+        sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(prog="pv", description="编程可视化学习器")
     subparsers = parser.add_subparsers(dest="command")
@@ -625,6 +676,19 @@ def main():
     serve_parser.add_argument("--project-root", default=None,
                               help="项目根目录（默认自动检测）")
 
+    # validate-problem subcommand
+    validate_parser = subparsers.add_parser(
+        "validate-problem",
+        help="运行固定用例 + oracle 生成用例验证题目",
+    )
+    validate_parser.add_argument("problem_path", help="题目目录路径")
+    validate_parser.add_argument("--generated", default=100, type=int,
+                                 help="生成用例数量（默认 100）")
+    validate_parser.add_argument("--seed", default=0, type=int,
+                                 help="随机种子（默认 0）")
+    validate_parser.add_argument("--solution", default="solution.py",
+                                 help="使用的解法文件（默认 solution.py）")
+
     # render-visual subcommand (new primary path)
     render_visual_parser = subparsers.add_parser(
         "render-visual",
@@ -656,5 +720,7 @@ def main():
         cmd_render_code(args)
     elif args.command == "serve":
         cmd_serve(args)
+    elif args.command == "validate-problem":
+        cmd_validate_problem(args)
     else:
         parser.print_help()
